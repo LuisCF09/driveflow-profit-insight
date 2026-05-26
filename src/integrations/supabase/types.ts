@@ -14,7 +14,271 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      expenses: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string
+          date: string
+          description: string | null
+          id: string
+          user_id: string
+          vehicle_id: string | null
+        }
+        Insert: {
+          amount?: number
+          category: string
+          created_at?: string
+          date?: string
+          description?: string | null
+          id?: string
+          user_id: string
+          vehicle_id?: string | null
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string
+          date?: string
+          description?: string | null
+          id?: string
+          user_id?: string
+          vehicle_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expenses_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      goals: {
+        Row: {
+          created_at: string
+          hours_target: number
+          id: string
+          km_target: number
+          month: number
+          profit_target: number
+          user_id: string
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          hours_target?: number
+          id?: string
+          km_target?: number
+          month: number
+          profit_target?: number
+          user_id: string
+          year: number
+        }
+        Update: {
+          created_at?: string
+          hours_target?: number
+          id?: string
+          km_target?: number
+          month?: number
+          profit_target?: number
+          user_id?: string
+          year?: number
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          name: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id: string
+          name?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      reports: {
+        Row: {
+          created_at: string
+          data: Json
+          gross_earnings: number
+          id: string
+          month: number
+          net_profit: number
+          total_costs: number
+          user_id: string
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          data?: Json
+          gross_earnings?: number
+          id?: string
+          month: number
+          net_profit?: number
+          total_costs?: number
+          user_id: string
+          year: number
+        }
+        Update: {
+          created_at?: string
+          data?: Json
+          gross_earnings?: number
+          id?: string
+          month?: number
+          net_profit?: number
+          total_costs?: number
+          user_id?: string
+          year?: number
+        }
+        Relationships: []
+      }
+      rides: {
+        Row: {
+          app: string | null
+          created_at: string
+          date: string
+          gross_earnings: number
+          hours_worked: number
+          id: string
+          km_driven: number
+          note: string | null
+          user_id: string
+          vehicle_id: string | null
+        }
+        Insert: {
+          app?: string | null
+          created_at?: string
+          date?: string
+          gross_earnings?: number
+          hours_worked?: number
+          id?: string
+          km_driven?: number
+          note?: string | null
+          user_id: string
+          vehicle_id?: string | null
+        }
+        Update: {
+          app?: string | null
+          created_at?: string
+          date?: string
+          gross_earnings?: number
+          hours_worked?: number
+          id?: string
+          km_driven?: number
+          note?: string | null
+          user_id?: string
+          vehicle_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rides_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscriptions: {
+        Row: {
+          created_at: string
+          ends_at: string | null
+          id: string
+          plan: string
+          started_at: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          ends_at?: string | null
+          id?: string
+          plan?: string
+          started_at?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          ends_at?: string | null
+          id?: string
+          plan?: string
+          started_at?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      vehicles: {
+        Row: {
+          brand: string | null
+          created_at: string
+          fuel_price: number
+          fuel_type: string
+          id: string
+          is_active: boolean
+          km_per_liter: number
+          maintenance_cost_per_km: number
+          model: string | null
+          monthly_installment: number
+          nickname: string
+          updated_at: string
+          user_id: string
+          year: number | null
+        }
+        Insert: {
+          brand?: string | null
+          created_at?: string
+          fuel_price?: number
+          fuel_type?: string
+          id?: string
+          is_active?: boolean
+          km_per_liter?: number
+          maintenance_cost_per_km?: number
+          model?: string | null
+          monthly_installment?: number
+          nickname: string
+          updated_at?: string
+          user_id: string
+          year?: number | null
+        }
+        Update: {
+          brand?: string | null
+          created_at?: string
+          fuel_price?: number
+          fuel_type?: string
+          id?: string
+          is_active?: boolean
+          km_per_liter?: number
+          maintenance_cost_per_km?: number
+          model?: string | null
+          monthly_installment?: number
+          nickname?: string
+          updated_at?: string
+          user_id?: string
+          year?: number | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
