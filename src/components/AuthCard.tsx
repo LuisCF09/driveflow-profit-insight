@@ -1,9 +1,71 @@
 import { useState } from "react";
+import { useNavigate } from "@tanstack/react-router";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 type Mode = "login" | "signup" | "recover";
 
 export function AuthCard() {
   const [mode, setMode] = useState<Mode>("login");
+  const [loading, setLoading] = useState(false);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const navigate = useNavigate();
+
+  function translateError(message: string) {
+    const m = message.toLowerCase();
+    if (m.includes("invalid login")) return "Email ou senha incorretos.";
+    if (m.includes("already registered") || m.includes("user already")) return "Este email já está cadastrado. Faça login.";
+    if (m.includes("password")) return "Senha inválida. Use ao menos 6 caracteres.";
+    if (m.includes("email")) return "Email inválido.";
+    return message;
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (loading) return;
+    setLoading(true);
+    try {
+      if (mode === "signup") {
+        if (password.length < 6) throw new Error("A senha deve ter pelo menos 6 caracteres.");
+        if (password !== confirm) throw new Error("As senhas não coincidem.");
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/onboarding`,
+            data: { name },
+          },
+        });
+        if (error) throw error;
+        toast.success("Conta criada! Vamos cadastrar seu veículo.");
+        navigate({ to: "/onboarding" });
+      } else if (mode === "login") {
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+        toast.success("Bem-vindo de volta!");
+        navigate({ to: "/dashboard" });
+      } else {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: `${window.location.origin}/reset-password`,
+        });
+        if (error) throw error;
+        toast.success("Enviamos um link de recuperação para seu email.");
+        setMode("login");
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Algo deu errado.";
+      toast.error(translateError(msg));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const submitLabel = loading
+    ? mode === "signup" ? "Criando conta..." : mode === "login" ? "Entrando..." : "Enviando..."
+    : mode === "signup" ? "Criar minha conta" : mode === "login" ? "Entrar" : "Enviar link de recuperação";
 
   return (
     <div className="glass shadow-card relative w-full max-w-md rounded-2xl p-6 sm:p-8">
@@ -27,16 +89,16 @@ export function AuthCard() {
         </span>
       </div>
 
-      <form className="space-y-3" onSubmit={(e) => e.preventDefault()}>
+      <form className="space-y-3" onSubmit={handleSubmit}>
         {mode === "signup" && (
-          <Field label="Nome" type="text" placeholder="Seu nome" />
+          <Field label="Nome" type="text" placeholder="Seu nome" value={name} onChange={(e) => setName(e.target.value)} required />
         )}
-        <Field label="Email" type="email" placeholder="voce@email.com" />
+        <Field label="Email" type="email" placeholder="voce@email.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
         {mode !== "recover" && (
-          <Field label="Senha" type="password" placeholder="••••••••" />
+          <Field label="Senha" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
         )}
         {mode === "signup" && (
-          <Field label="Confirmar senha" type="password" placeholder="••••••••" />
+          <Field label="Confirmar senha" type="password" placeholder="••••••••" value={confirm} onChange={(e) => setConfirm(e.target.value)} required minLength={6} />
         )}
 
         {mode === "login" && (
@@ -53,11 +115,10 @@ export function AuthCard() {
 
         <button
           type="submit"
-          className="bg-gradient-primary shadow-glow group relative mt-2 inline-flex w-full items-center justify-center rounded-xl px-4 py-3 text-sm font-semibold text-primary-foreground transition-transform hover:-translate-y-0.5"
+          disabled={loading}
+          className="bg-gradient-primary shadow-glow group relative mt-2 inline-flex w-full items-center justify-center rounded-xl px-4 py-3 text-sm font-semibold text-primary-foreground transition-transform hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0"
         >
-          {mode === "login" && "Entrar"}
-          {mode === "signup" && "Criar minha conta"}
-          {mode === "recover" && "Enviar link de recuperação"}
+          {submitLabel}
         </button>
 
         <div className="relative my-4 flex items-center gap-3 text-[11px] uppercase tracking-widest text-muted-foreground">
@@ -68,7 +129,17 @@ export function AuthCard() {
 
         <button
           type="button"
-          className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-secondary/60 px-4 py-3 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
+          disabled={loading}
+          onClick={async () => {
+            try {
+              const { lovable } = await import("@/integrations/lovable");
+              const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: `${window.location.origin}/dashboard` });
+              if (result.error) toast.error("Não foi possível entrar com Google.");
+            } catch {
+              toast.error("Login com Google indisponível no momento.");
+            }
+          }}
+          className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-secondary/60 px-4 py-3 text-sm font-medium text-foreground transition-colors hover:bg-secondary disabled:opacity-60"
         >
           <GoogleIcon /> Continuar com Google
         </button>
