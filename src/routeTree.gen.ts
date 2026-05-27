@@ -17,6 +17,7 @@ import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as GoalsRouteImport } from './routes/goals'
 import { Route as ExpensesRouteImport } from './routes/expenses'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as DailyReportRouteImport } from './routes/daily-report'
 import { Route as IndexRouteImport } from './routes/index'
 
 const RidesRoute = RidesRouteImport.update({
@@ -59,6 +60,11 @@ const DashboardRoute = DashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DailyReportRoute = DailyReportRouteImport.update({
+  id: '/daily-report',
+  path: '/daily-report',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -67,6 +73,7 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/daily-report': typeof DailyReportRoute
   '/dashboard': typeof DashboardRoute
   '/expenses': typeof ExpensesRoute
   '/goals': typeof GoalsRoute
@@ -78,6 +85,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/daily-report': typeof DailyReportRoute
   '/dashboard': typeof DashboardRoute
   '/expenses': typeof ExpensesRoute
   '/goals': typeof GoalsRoute
@@ -90,6 +98,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/daily-report': typeof DailyReportRoute
   '/dashboard': typeof DashboardRoute
   '/expenses': typeof ExpensesRoute
   '/goals': typeof GoalsRoute
@@ -103,6 +112,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/daily-report'
     | '/dashboard'
     | '/expenses'
     | '/goals'
@@ -114,6 +124,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/daily-report'
     | '/dashboard'
     | '/expenses'
     | '/goals'
@@ -125,6 +136,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/daily-report'
     | '/dashboard'
     | '/expenses'
     | '/goals'
@@ -137,6 +149,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  DailyReportRoute: typeof DailyReportRoute
   DashboardRoute: typeof DashboardRoute
   ExpensesRoute: typeof ExpensesRoute
   GoalsRoute: typeof GoalsRoute
@@ -205,6 +218,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/daily-report': {
+      id: '/daily-report'
+      path: '/daily-report'
+      fullPath: '/daily-report'
+      preLoaderRoute: typeof DailyReportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -217,6 +237,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  DailyReportRoute: DailyReportRoute,
   DashboardRoute: DashboardRoute,
   ExpensesRoute: ExpensesRoute,
   GoalsRoute: GoalsRoute,
