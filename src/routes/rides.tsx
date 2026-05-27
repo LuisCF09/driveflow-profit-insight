@@ -1,12 +1,13 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useMemo, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { useDriveFlowData } from "@/hooks/use-driveflow-data";
-import { brl, rideProfit, rideCost, rideMinutes, formatMinutes } from "@/lib/finance";
+import { useSubscription } from "@/hooks/use-subscription";
+import { brl, rideProfit, rideCost, rideMinutes, formatMinutes, inRange } from "@/lib/finance";
 import { AddRideDialog } from "@/components/AddRideDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Lock } from "lucide-react";
 
 export const Route = createFileRoute("/rides")({
   head: () => ({ meta: [{ title: "Corridas — DriveFlow" }] }),
@@ -14,7 +15,9 @@ export const Route = createFileRoute("/rides")({
 });
 
 function RidesPage() {
-  const { rides, vehicle, reload } = useDriveFlowData();
+  const { rides: allRides, vehicle, reload } = useDriveFlowData();
+  const { isPremium } = useSubscription();
+  const rides = useMemo(() => isPremium ? allRides : allRides.filter((r) => inRange(r.date, 15)), [allRides, isPremium]);
   const [open, setOpen] = useState(false);
 
   async function del(id: string) {
@@ -31,6 +34,14 @@ function RidesPage() {
           <Plus className="h-3.5 w-3.5" /> Nova
         </button>
       </div>
+
+      {!isPremium && (
+        <div className="mb-4 flex items-center justify-between gap-3 rounded-xl border border-primary/30 bg-primary/5 px-4 py-2.5 text-xs">
+          <span className="text-muted-foreground">Mostrando últimos 15 dias. Faça upgrade para ver o histórico completo.</span>
+          <Link to="/premium" className="font-medium text-primary hover:underline">Premium →</Link>
+        </div>
+      )}
+
 
       {rides.length === 0 ? (
         <div className="glass rounded-2xl p-10 text-center text-sm text-muted-foreground">Nenhuma corrida ainda. Adicione a primeira.</div>

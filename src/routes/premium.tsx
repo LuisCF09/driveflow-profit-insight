@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
 import { Check, Crown } from "lucide-react";
 import { toast } from "sonner";
+import { useSubscription } from "@/hooks/use-subscription";
 
 export const Route = createFileRoute("/premium")({
   head: () => ({ meta: [{ title: "Premium — DriveFlow" }] }),
@@ -9,14 +10,15 @@ export const Route = createFileRoute("/premium")({
 });
 
 function PremiumPage() {
+  const { isPremium } = useSubscription();
   return (
     <AppShell title="DriveFlow Premium">
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Plan
           name="Grátis"
           price="R$ 0"
-          features={["Dashboard básico", "Registro ilimitado de corridas", "2 relatórios completos a cada 15 dias", "1 veículo"]}
-          cta="Plano atual"
+          features={["Dashboard básico", "Registro ilimitado de corridas", "2 relatórios completos a cada 15 dias", "1 veículo", "Histórico dos últimos 15 dias"]}
+          cta={isPremium ? "Plano gratuito" : "Plano atual"}
           disabled
         />
         <Plan
@@ -31,8 +33,9 @@ function PremiumPage() {
             "Exportação dos dados",
             "Suporte prioritário",
           ]}
-          cta="Assinar Premium"
+          cta={isPremium ? "Plano atual" : "Assinar Premium"}
           highlight
+          disabled={isPremium}
           onClick={() => toast.info("Pagamento em breve. Em desenvolvimento.")}
         />
       </div>
