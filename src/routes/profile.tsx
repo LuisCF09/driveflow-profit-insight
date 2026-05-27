@@ -18,14 +18,19 @@ function ProfilePage() {
   const [pwd, setPwd] = useState("");
   const [vehicle, setVehicle] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [cpf, setCpf] = useState<string>(""); // stored 11 digits
+  const [cpfEditing, setCpfEditing] = useState(false);
+  const [cpfDraft, setCpfDraft] = useState<string>(""); // formatted draft
+  const [cpfSaving, setCpfSaving] = useState(false);
 
   useEffect(() => {
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { navigate({ to: "/" }); return; }
       setEmail(user.email || "");
-      const { data: p } = await supabase.from("profiles").select("name").eq("id", user.id).maybeSingle();
+      const { data: p } = await supabase.from("profiles").select("name, cpf").eq("id", user.id).maybeSingle();
       setName(p?.name || "");
+      setCpf(p?.cpf || "");
       const { data: v } = await supabase.from("vehicles").select("*").eq("is_active", true).maybeSingle();
       setVehicle(v);
     })();
