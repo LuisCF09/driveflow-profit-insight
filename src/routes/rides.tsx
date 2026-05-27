@@ -43,6 +43,7 @@ function RidesPage() {
                 <th className="px-4 py-3">App</th>
                 <th className="px-4 py-3 text-right">Receita</th>
                 <th className="px-4 py-3 text-right">KM</th>
+                <th className="px-4 py-3 text-right">Tempo</th>
                 <th className="px-4 py-3 text-right">Custo</th>
                 <th className="px-4 py-3 text-right">Lucro</th>
                 <th className="px-4 py-3" />
