@@ -158,6 +158,7 @@ export type Database = {
           id: string
           km_driven: number
           note: string | null
+          total_minutes: number
           user_id: string
           vehicle_id: string | null
         }
@@ -170,6 +171,7 @@ export type Database = {
           id?: string
           km_driven?: number
           note?: string | null
+          total_minutes?: number
           user_id: string
           vehicle_id?: string | null
         }
@@ -182,6 +184,7 @@ export type Database = {
           id?: string
           km_driven?: number
           note?: string | null
+          total_minutes?: number
           user_id?: string
           vehicle_id?: string | null
         }
