@@ -18,7 +18,10 @@ export function AuthCard() {
     const m = message.toLowerCase();
     if (m.includes("invalid login")) return "Email ou senha incorretos.";
     if (m.includes("already registered") || m.includes("user already")) return "Este email já está cadastrado. Faça login.";
-    if (m.includes("password")) return "Senha inválida. Use ao menos 6 caracteres.";
+    if (m.includes("pwned") || m.includes("leaked") || m.includes("compromised") || m.includes("weak password")) return "Esta senha é muito comum ou foi vazada em outros sites. Escolha uma senha mais forte (combine letras, números e símbolos).";
+    if (m.includes("at least") && m.includes("character")) return "A senha deve ter pelo menos 6 caracteres.";
+    if (m.includes("password should") || m.includes("password must")) return "Senha não atende aos requisitos. Tente uma combinação mais forte.";
+    if (m.includes("password")) return message;
     if (m.includes("email")) return "Email inválido.";
     return message;
   }
