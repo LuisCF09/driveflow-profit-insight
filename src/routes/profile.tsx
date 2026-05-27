@@ -97,6 +97,54 @@ function ProfilePage() {
           <div className="mt-4 space-y-3">
             <Lbl t="Nome"><input value={name} onChange={(e) => setName(e.target.value)} className={cls} /></Lbl>
             <Lbl t="E-mail"><input value={email} disabled className={cls + " opacity-60"} /></Lbl>
+            <div>
+              <span className="mb-1 block text-xs text-muted-foreground">CPF</span>
+              {!cpfEditing ? (
+                <div className="flex items-center justify-between gap-2 rounded-xl border border-border bg-input/40 px-3 py-2 text-sm">
+                  <span className={cpf ? "" : "text-muted-foreground"}>
+                    {cpf ? maskCPF(cpf) : "Não cadastrado"}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => { setCpfDraft(cpf ? formatCPF(cpf) : ""); setCpfEditing(true); }}
+                    className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                  >
+                    <Pencil className="h-3 w-3" /> {cpf ? "Editar" : "Adicionar"}
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <input
+                    value={cpfDraft}
+                    onChange={(e) => setCpfDraft(formatCPF(e.target.value))}
+                    placeholder="000.000.000-00"
+                    inputMode="numeric"
+                    maxLength={14}
+                    className={cls}
+                  />
+                  {onlyDigits(cpfDraft).length === 11 && !isValidCPF(cpfDraft) && (
+                    <p className="text-[11px] text-red-400">CPF inválido</p>
+                  )}
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={saveCpf}
+                      disabled={cpfSaving || !isValidCPF(cpfDraft)}
+                      className="bg-gradient-primary shadow-glow flex-1 rounded-xl py-2 text-xs font-semibold text-primary-foreground disabled:opacity-50"
+                    >
+                      {cpfSaving ? "Salvando..." : "Salvar CPF"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setCpfEditing(false); setCpfDraft(""); }}
+                      className="rounded-xl border border-border bg-card/60 px-4 text-xs hover:bg-card"
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
             <button onClick={saveProfile} disabled={loading} className="bg-gradient-primary shadow-glow w-full rounded-xl py-2.5 text-sm font-semibold text-primary-foreground disabled:opacity-70">Salvar</button>
           </div>
           <div className="mt-6 border-t border-border/40 pt-4">
