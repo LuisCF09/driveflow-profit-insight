@@ -18,7 +18,8 @@ const RANGES = [7, 15, 30, 90, 365] as const;
 
 function DashboardPage() {
   const navigate = useNavigate();
-  const { rides, expenses, vehicle, loading, reload } = useDriveFlowData();
+  const { rides: allRides, expenses: allExpenses, vehicle, loading, reload } = useDriveFlowData();
+  const { isPremium, loading: subLoading } = useSubscription();
   const [checked, setChecked] = useState(false);
   const [range, setRange] = useState<(typeof RANGES)[number]>(30);
   const [addOpen, setAddOpen] = useState(false);
@@ -32,6 +33,10 @@ function DashboardPage() {
       setChecked(true);
     })();
   }, [navigate]);
+
+  // Free plan: cap visible history to last 15 days.
+  const rides = useMemo(() => isPremium ? allRides : allRides.filter((r) => inRange(r.date, 15)), [allRides, isPremium]);
+  const expenses = useMemo(() => isPremium ? allExpenses : allExpenses.filter((e) => inRange(e.date, 15)), [allExpenses, isPremium]);
 
   const mRides = useMemo(() => rides.filter((r) => isSameMonth(r.date)), [rides]);
   const mExp = useMemo(() => expenses.filter((e) => isSameMonth(e.date)), [expenses]);
