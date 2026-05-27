@@ -49,7 +49,7 @@ function DashboardPage() {
   const perHour = month.hours > 0 ? month.profit / month.hours : 0;
   const perKm = month.km > 0 ? (month.fuel + month.wear + month.exp) / month.km : 0;
 
-  if (!checked || loading) {
+  if (!checked || loading || subLoading) {
     return <div className="bg-hero flex min-h-screen items-center justify-center text-sm text-muted-foreground">Carregando...</div>;
   }
 
