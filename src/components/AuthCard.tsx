@@ -95,10 +95,32 @@ export function AuthCard() {
         )}
         <Field label="Email" type="email" placeholder="voce@email.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
         {mode !== "recover" && (
-          <Field label="Senha" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
+          <div>
+            <Field label="Senha" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
+            {mode === "signup" && password.length > 0 && (
+              <div className="mt-1.5 space-y-1">
+                <div className="h-1 w-full overflow-hidden rounded-full bg-secondary/60">
+                  <div
+                    className={`h-full transition-all ${
+                      password.length < 6 ? "bg-red-500" : password.length < 10 ? "bg-yellow-500" : "bg-green-500"
+                    }`}
+                    style={{ width: `${Math.min(100, (password.length / 12) * 100)}%` }}
+                  />
+                </div>
+                <p className={`text-[11px] ${password.length < 6 ? "text-red-400" : "text-muted-foreground"}`}>
+                  {password.length < 6 ? `A senha deve ter pelo menos 6 caracteres (${password.length}/6)` : "Senha válida"}
+                </p>
+              </div>
+            )}
+          </div>
         )}
         {mode === "signup" && (
-          <Field label="Confirmar senha" type="password" placeholder="••••••••" value={confirm} onChange={(e) => setConfirm(e.target.value)} required minLength={6} />
+          <div>
+            <Field label="Confirmar senha" type="password" placeholder="••••••••" value={confirm} onChange={(e) => setConfirm(e.target.value)} required minLength={6} />
+            {confirm.length > 0 && confirm !== password && (
+              <p className="mt-1 text-[11px] text-red-400">As senhas não coincidem</p>
+            )}
+          </div>
         )}
 
         {mode === "login" && (
