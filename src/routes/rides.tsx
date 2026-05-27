@@ -15,7 +15,9 @@ export const Route = createFileRoute("/rides")({
 });
 
 function RidesPage() {
-  const { rides, vehicle, reload } = useDriveFlowData();
+  const { rides: allRides, vehicle, reload } = useDriveFlowData();
+  const { isPremium } = useSubscription();
+  const rides = useMemo(() => isPremium ? allRides : allRides.filter((r) => inRange(r.date, 15)), [allRides, isPremium]);
   const [open, setOpen] = useState(false);
 
   async function del(id: string) {
