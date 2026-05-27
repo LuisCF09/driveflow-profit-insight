@@ -65,6 +65,28 @@ function ProfilePage() {
     if (error) toast.error(error.message); else toast.success("Veículo atualizado");
   }
 
+  async function saveCpf() {
+    const digits = onlyDigits(cpfDraft);
+    if (!isValidCPF(digits)) { toast.error("CPF inválido"); return; }
+    setCpfSaving(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Sessão");
+      const { error } = await supabase.from("profiles").update({ cpf: digits }).eq("id", user.id);
+      if (error) {
+        if ((error as any).code === "23505") { toast.error("Este CPF já está cadastrado"); return; }
+        throw error;
+      }
+      setCpf(digits);
+      setCpfEditing(false);
+      toast.success("CPF atualizado");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erro ao salvar CPF");
+    } finally {
+      setCpfSaving(false);
+    }
+  }
+
   const cls = "w-full rounded-xl border border-border bg-input/60 px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/30";
 
   return (
