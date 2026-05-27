@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { useDriveFlowData } from "@/hooks/use-driveflow-data";
-import { brl, rideProfit, rideCost } from "@/lib/finance";
+import { brl, rideProfit, rideCost, rideMinutes, formatMinutes } from "@/lib/finance";
 import { AddRideDialog } from "@/components/AddRideDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
