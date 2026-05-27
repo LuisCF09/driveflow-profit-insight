@@ -35,6 +35,14 @@ function RidesPage() {
         </button>
       </div>
 
+      {!isPremium && (
+        <div className="mb-4 flex items-center justify-between gap-3 rounded-xl border border-primary/30 bg-primary/5 px-4 py-2.5 text-xs">
+          <span className="text-muted-foreground">Mostrando últimos 15 dias. Faça upgrade para ver o histórico completo.</span>
+          <Link to="/premium" className="font-medium text-primary hover:underline">Premium →</Link>
+        </div>
+      )}
+
+
       {rides.length === 0 ? (
         <div className="glass rounded-2xl p-10 text-center text-sm text-muted-foreground">Nenhuma corrida ainda. Adicione a primeira.</div>
       ) : (
