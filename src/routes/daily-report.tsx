@@ -20,7 +20,6 @@ function DailyReportPage() {
   const totalKm = useMemo(() => today.reduce((s, r) => s + Number(r.km_driven), 0), [today]);
   const totalFuel = useMemo(() => fuelCost(totalKm, vehicle), [totalKm, vehicle]);
   const totalWear = useMemo(() => wearCost(totalKm, vehicle), [totalKm, vehicle]);
-  const totalSpent = totalFuel; // fuel is the main driver-visible cost
   const netProfit = useMemo(() => totalEarned - rideCost(totalKm, vehicle), [totalEarned, totalKm, vehicle]);
   const avgProfit = totalRides > 0 ? netProfit / totalRides : 0;
   const totalMinutes = useMemo(() => today.reduce((s, r) => s + rideMinutes(r), 0), [today]);
