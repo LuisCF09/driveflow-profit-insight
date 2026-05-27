@@ -8,6 +8,7 @@ import { AddRideDialog } from "@/components/AddRideDialog";
 
 const NAV = [
   { to: "/dashboard", label: "Painel", icon: LayoutDashboard },
+  { to: "/daily-report", label: "Relatório de hoje", icon: CalendarDays },
   { to: "/rides", label: "Corridas", icon: Car },
   { to: "/expenses", label: "Despesas", icon: Receipt },
   { to: "/goals", label: "Metas", icon: Target },
