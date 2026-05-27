@@ -73,9 +73,12 @@ function ProfilePage() {
           <div className="mt-6 border-t border-border/40 pt-4">
             <h3 className="text-sm font-medium">Alterar senha</h3>
             <div className="mt-3 flex gap-2">
-              <input type="password" value={pwd} onChange={(e) => setPwd(e.target.value)} placeholder="Nova senha" className={cls} />
-              <button onClick={changePwd} className="rounded-xl border border-border bg-card/60 px-4 text-xs hover:bg-card">Trocar</button>
+              <input type="password" minLength={6} value={pwd} onChange={(e) => setPwd(e.target.value)} placeholder="Nova senha (mín. 6 caracteres)" className={cls} />
+              <button onClick={changePwd} disabled={pwd.length < 6} className="rounded-xl border border-border bg-card/60 px-4 text-xs hover:bg-card disabled:cursor-not-allowed disabled:opacity-50">Trocar</button>
             </div>
+            {pwd.length > 0 && pwd.length < 6 && (
+              <p className="mt-1.5 text-[11px] text-red-400">A senha deve ter pelo menos 6 caracteres ({pwd.length}/6)</p>
+            )}
           </div>
         </section>
 
