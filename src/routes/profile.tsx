@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { formatCPF, isValidCPF, maskCPF, onlyDigits } from "@/lib/cpf";
+import { Pencil } from "lucide-react";
 
 export const Route = createFileRoute("/profile")({
   head: () => ({ meta: [{ title: "Perfil — DriveFlow" }] }),
@@ -16,14 +18,19 @@ function ProfilePage() {
   const [pwd, setPwd] = useState("");
   const [vehicle, setVehicle] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [cpf, setCpf] = useState<string>(""); // stored 11 digits
+  const [cpfEditing, setCpfEditing] = useState(false);
+  const [cpfDraft, setCpfDraft] = useState<string>(""); // formatted draft
+  const [cpfSaving, setCpfSaving] = useState(false);
 
   useEffect(() => {
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { navigate({ to: "/" }); return; }
       setEmail(user.email || "");
-      const { data: p } = await supabase.from("profiles").select("name").eq("id", user.id).maybeSingle();
+      const { data: p } = await supabase.from("profiles").select("name, cpf").eq("id", user.id).maybeSingle();
       setName(p?.name || "");
+      setCpf(p?.cpf || "");
       const { data: v } = await supabase.from("vehicles").select("*").eq("is_active", true).maybeSingle();
       setVehicle(v);
     })();
@@ -58,6 +65,28 @@ function ProfilePage() {
     if (error) toast.error(error.message); else toast.success("Veículo atualizado");
   }
 
+  async function saveCpf() {
+    const digits = onlyDigits(cpfDraft);
+    if (!isValidCPF(digits)) { toast.error("CPF inválido"); return; }
+    setCpfSaving(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Sessão");
+      const { error } = await supabase.from("profiles").update({ cpf: digits }).eq("id", user.id);
+      if (error) {
+        if ((error as any).code === "23505") { toast.error("Este CPF já está cadastrado"); return; }
+        throw error;
+      }
+      setCpf(digits);
+      setCpfEditing(false);
+      toast.success("CPF atualizado");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erro ao salvar CPF");
+    } finally {
+      setCpfSaving(false);
+    }
+  }
+
   const cls = "w-full rounded-xl border border-border bg-input/60 px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/30";
 
   return (
@@ -68,6 +97,54 @@ function ProfilePage() {
           <div className="mt-4 space-y-3">
             <Lbl t="Nome"><input value={name} onChange={(e) => setName(e.target.value)} className={cls} /></Lbl>
             <Lbl t="E-mail"><input value={email} disabled className={cls + " opacity-60"} /></Lbl>
+            <div>
+              <span className="mb-1 block text-xs text-muted-foreground">CPF</span>
+              {!cpfEditing ? (
+                <div className="flex items-center justify-between gap-2 rounded-xl border border-border bg-input/40 px-3 py-2 text-sm">
+                  <span className={cpf ? "" : "text-muted-foreground"}>
+                    {cpf ? maskCPF(cpf) : "Não cadastrado"}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => { setCpfDraft(cpf ? formatCPF(cpf) : ""); setCpfEditing(true); }}
+                    className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                  >
+                    <Pencil className="h-3 w-3" /> {cpf ? "Editar" : "Adicionar"}
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <input
+                    value={cpfDraft}
+                    onChange={(e) => setCpfDraft(formatCPF(e.target.value))}
+                    placeholder="000.000.000-00"
+                    inputMode="numeric"
+                    maxLength={14}
+                    className={cls}
+                  />
+                  {onlyDigits(cpfDraft).length === 11 && !isValidCPF(cpfDraft) && (
+                    <p className="text-[11px] text-red-400">CPF inválido</p>
+                  )}
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={saveCpf}
+                      disabled={cpfSaving || !isValidCPF(cpfDraft)}
+                      className="bg-gradient-primary shadow-glow flex-1 rounded-xl py-2 text-xs font-semibold text-primary-foreground disabled:opacity-50"
+                    >
+                      {cpfSaving ? "Salvando..." : "Salvar CPF"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setCpfEditing(false); setCpfDraft(""); }}
+                      className="rounded-xl border border-border bg-card/60 px-4 text-xs hover:bg-card"
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
             <button onClick={saveProfile} disabled={loading} className="bg-gradient-primary shadow-glow w-full rounded-xl py-2.5 text-sm font-semibold text-primary-foreground disabled:opacity-70">Salvar</button>
           </div>
           <div className="mt-6 border-t border-border/40 pt-4">
