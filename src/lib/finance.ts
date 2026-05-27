@@ -92,7 +92,7 @@ export function isToday(dateISO: string) {
 export function summarize(rides: Ride[], expenses: Expense[], v: Vehicle | null) {
   const gross = rides.reduce((s, r) => s + Number(r.gross_earnings), 0);
   const km = rides.reduce((s, r) => s + Number(r.km_driven), 0);
-  const hours = rides.reduce((s, r) => s + Number(r.hours_worked), 0);
+  const hours = rides.reduce((s, r) => s + rideMinutes(r) / 60, 0);
   const fuel = fuelCost(km, v);
   const wear = wearCost(km, v);
   const exp = expenses.reduce((s, e) => s + Number(e.amount), 0);
