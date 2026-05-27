@@ -86,40 +86,57 @@ function DashboardPage() {
           </div>
 
           {/* Chart */}
-          <div className="glass shadow-card rounded-2xl p-4 sm:p-6">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <div className="font-display text-base font-semibold">Receita × Custos × Lucro</div>
-                <div className="text-xs text-muted-foreground">Visão dos últimos {range} dias</div>
+          {isPremium ? (
+            <div className="glass shadow-card rounded-2xl p-4 sm:p-6">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <div className="font-display text-base font-semibold">Receita × Custos × Lucro</div>
+                  <div className="text-xs text-muted-foreground">Visão dos últimos {range} dias</div>
+                </div>
+                <div className="flex gap-1 rounded-xl border border-border/60 bg-card/40 p-1">
+                  {RANGES.map((r) => (
+                    <button key={r} onClick={() => setRange(r)} className={`rounded-lg px-2.5 py-1 text-xs ${range === r ? "bg-primary/20 text-foreground ring-1 ring-primary/40" : "text-muted-foreground"}`}>
+                      {r === 365 ? "1a" : `${r}d`}
+                    </button>
+                  ))}
+                </div>
               </div>
-              <div className="flex gap-1 rounded-xl border border-border/60 bg-card/40 p-1">
-                {RANGES.map((r) => (
-                  <button key={r} onClick={() => setRange(r)} className={`rounded-lg px-2.5 py-1 text-xs ${range === r ? "bg-primary/20 text-foreground ring-1 ring-primary/40" : "text-muted-foreground"}`}>
-                    {r === 365 ? "1a" : `${r}d`}
-                  </button>
-                ))}
+              <div className="mt-4 h-64 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={series} margin={{ top: 10, right: 8, bottom: 0, left: -10 }}>
+                    <defs>
+                      <linearGradient id="gLucro" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="oklch(0.82 0.18 230)" stopOpacity={0.6} />
+                        <stop offset="100%" stopColor="oklch(0.82 0.18 230)" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid stroke="oklch(1 0 0 / 0.06)" vertical={false} />
+                    <XAxis dataKey="label" stroke="oklch(0.7 0.02 250)" fontSize={11} tickLine={false} axisLine={false} minTickGap={20} />
+                    <YAxis stroke="oklch(0.7 0.02 250)" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(v) => `R$${v}`} />
+                    <Tooltip contentStyle={{ background: "oklch(0.18 0.035 260)", border: "1px solid oklch(1 0 0 / 0.1)", borderRadius: 12, fontSize: 12 }} formatter={(v: number) => brl(Number(v))} />
+                    <Area type="monotone" dataKey="receita" stroke="oklch(0.65 0.05 250)" strokeWidth={1.5} fillOpacity={0} />
+                    <Area type="monotone" dataKey="custos" stroke="oklch(0.62 0.22 25)" strokeWidth={1.5} fillOpacity={0} />
+                    <Area type="monotone" dataKey="lucro" stroke="oklch(0.82 0.18 230)" strokeWidth={2.5} fill="url(#gLucro)" />
+                  </AreaChart>
+                </ResponsiveContainer>
               </div>
             </div>
-            <div className="mt-4 h-64 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={series} margin={{ top: 10, right: 8, bottom: 0, left: -10 }}>
-                  <defs>
-                    <linearGradient id="gLucro" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="oklch(0.82 0.18 230)" stopOpacity={0.6} />
-                      <stop offset="100%" stopColor="oklch(0.82 0.18 230)" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid stroke="oklch(1 0 0 / 0.06)" vertical={false} />
-                  <XAxis dataKey="label" stroke="oklch(0.7 0.02 250)" fontSize={11} tickLine={false} axisLine={false} minTickGap={20} />
-                  <YAxis stroke="oklch(0.7 0.02 250)" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(v) => `R$${v}`} />
-                  <Tooltip contentStyle={{ background: "oklch(0.18 0.035 260)", border: "1px solid oklch(1 0 0 / 0.1)", borderRadius: 12, fontSize: 12 }} formatter={(v: number) => brl(Number(v))} />
-                  <Area type="monotone" dataKey="receita" stroke="oklch(0.65 0.05 250)" strokeWidth={1.5} fillOpacity={0} />
-                  <Area type="monotone" dataKey="custos" stroke="oklch(0.62 0.22 25)" strokeWidth={1.5} fillOpacity={0} />
-                  <Area type="monotone" dataKey="lucro" stroke="oklch(0.82 0.18 230)" strokeWidth={2.5} fill="url(#gLucro)" />
-                </AreaChart>
-              </ResponsiveContainer>
+          ) : (
+            <div className="glass shadow-card rounded-2xl p-6 sm:p-8">
+              <div className="flex flex-col items-center justify-center text-center">
+                <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/15 text-primary">
+                  <Lock className="h-6 w-6" />
+                </div>
+                <div className="font-display text-lg font-semibold">Gráficos e analytics avançados</div>
+                <p className="mt-1 max-w-sm text-sm text-muted-foreground">
+                  Faça upgrade para o Premium para visualizar gráficos de receita, custos e lucro, e desbloquear analytics avançados.
+                </p>
+                <Link to="/premium" className="bg-gradient-primary shadow-glow mt-4 inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-primary-foreground">
+                  <Crown className="h-4 w-4" /> Assinar Premium
+                </Link>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Quick actions */}
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
