@@ -13,17 +13,7 @@ export const Route = createFileRoute("/daily-report")({
 function DailyReportPage() {
   const { rides: allRides, vehicle, reload } = useDriveFlowData();
 
-  const today = useMemo(() => {
-    const now = new Date();
-    return allRides.filter((r) => {
-      const d = new Date(r.date);
-      return (
-        d.getDate() === now.getDate() &&
-        d.getMonth() === now.getMonth() &&
-        d.getFullYear() === now.getFullYear()
-      );
-    });
-  }, [allRides]);
+  const today = useMemo(() => allRides.filter((r) => isToday(r.date)), [allRides]);
 
   const totalRides = today.length;
   const totalEarned = useMemo(() => today.reduce((s, r) => s + Number(r.gross_earnings), 0), [today]);
