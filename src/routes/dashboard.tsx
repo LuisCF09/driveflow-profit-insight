@@ -3,9 +3,10 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/AppShell";
 import { useDriveFlowData } from "@/hooks/use-driveflow-data";
-import { brl, isSameMonth, isToday, summarize, seriesByDay } from "@/lib/finance";
+import { useSubscription } from "@/hooks/use-subscription";
+import { brl, isSameMonth, isToday, summarize, seriesByDay, inRange } from "@/lib/finance";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
-import { Car, Plus, TrendingUp, Wallet, Clock, Route as RouteIcon, Fuel, Target, Calendar, Receipt } from "lucide-react";
+import { Car, Plus, TrendingUp, Wallet, Clock, Route as RouteIcon, Fuel, Target, Calendar, Receipt, Lock, Crown } from "lucide-react";
 import { AddRideDialog } from "@/components/AddRideDialog";
 
 export const Route = createFileRoute("/dashboard")({
