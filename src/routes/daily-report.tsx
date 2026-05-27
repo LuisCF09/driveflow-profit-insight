@@ -2,8 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { AppShell } from "@/components/AppShell";
 import { useDriveFlowData } from "@/hooks/use-driveflow-data";
-import { useSubscription } from "@/hooks/use-subscription";
-import { brl, rideProfit, rideCost, rideMinutes, formatMinutes, fuelCost, wearCost } from "@/lib/finance";
+import { brl, rideCost, rideMinutes, formatMinutes, fuelCost, wearCost, isToday } from "@/lib/finance";
 import { Car, Wallet, Fuel, TrendingUp, Clock, Route as RouteIcon, Share2 } from "lucide-react";
 
 export const Route = createFileRoute("/daily-report")({
@@ -13,7 +12,6 @@ export const Route = createFileRoute("/daily-report")({
 
 function DailyReportPage() {
   const { rides: allRides, vehicle, reload } = useDriveFlowData();
-  const { isPremium } = useSubscription();
 
   const today = useMemo(() => {
     const now = new Date();
