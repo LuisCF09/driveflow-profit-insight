@@ -5,9 +5,24 @@ export type Ride = {
   gross_earnings: number;
   km_driven: number;
   hours_worked: number;
+  total_minutes?: number | null;
   note: string | null;
   vehicle_id: string | null;
 };
+
+export function rideMinutes(r: Ride): number {
+  if (r.total_minutes != null && Number(r.total_minutes) > 0) return Number(r.total_minutes);
+  return Math.round(Number(r.hours_worked || 0) * 60);
+}
+
+export function formatMinutes(min: number): string {
+  const m = Math.max(0, Math.round(min));
+  const h = Math.floor(m / 60);
+  const rest = m % 60;
+  if (h === 0) return `${rest} minutos`;
+  if (rest === 0) return `${h} ${h === 1 ? "hora" : "horas"}`;
+  return `${h} ${h === 1 ? "hora" : "horas"} ${rest} ${rest === 1 ? "minuto" : "minutos"}`;
+}
 
 export type Expense = {
   id: string;
