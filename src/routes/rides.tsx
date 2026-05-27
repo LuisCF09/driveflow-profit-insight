@@ -1,12 +1,13 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useMemo, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { useDriveFlowData } from "@/hooks/use-driveflow-data";
-import { brl, rideProfit, rideCost, rideMinutes, formatMinutes } from "@/lib/finance";
+import { useSubscription } from "@/hooks/use-subscription";
+import { brl, rideProfit, rideCost, rideMinutes, formatMinutes, inRange } from "@/lib/finance";
 import { AddRideDialog } from "@/components/AddRideDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Lock } from "lucide-react";
 
 export const Route = createFileRoute("/rides")({
   head: () => ({ meta: [{ title: "Corridas — DriveFlow" }] }),
