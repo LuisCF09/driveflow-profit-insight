@@ -58,6 +58,7 @@ function RidesPage() {
                     <td className="px-4 py-3">{r.app || "—"}</td>
                     <td className="px-4 py-3 text-right">{brl(Number(r.gross_earnings))}</td>
                     <td className="px-4 py-3 text-right">{Number(r.km_driven).toFixed(1)}</td>
+                    <td className="px-4 py-3 text-right text-muted-foreground">{formatMinutes(rideMinutes(r))}</td>
                     <td className="px-4 py-3 text-right text-muted-foreground">{brl(rideCost(Number(r.km_driven), vehicle))}</td>
                     <td className={`px-4 py-3 text-right font-medium ${profit >= 0 ? "text-neon" : "text-destructive"}`}>{brl(profit)}</td>
                     <td className="px-4 py-3 text-right"><button onClick={() => del(r.id)} className="text-muted-foreground hover:text-destructive"><Trash2 className="h-4 w-4" /></button></td>
