@@ -157,19 +157,37 @@ function HistoricoPage() {
     };
   }, [filtered]);
 
-  async function handleDelete(id: string) {
-    if (!window.confirm("Excluir este registro? Esta ação não pode ser desfeita.")) return;
-    setDeletingId(id);
+  async function handleDelete(entry: Entry) {
+    setDeletingId(entry.id);
     try {
-      const { error } = await supabase.from("platform_entries").delete().eq("id", id);
+      const { error } = await supabase.from("platform_entries").delete().eq("id", entry.id);
       if (error) {
         toast.error(`Falha ao excluir: ${error.message}`);
         return;
       }
-      setEntries((prev) => prev.filter((e) => e.id !== id));
+      setEntries((prev) => prev.filter((e) => e.id !== entry.id));
+
+      // Se o registro veio de um print importado, remove também o print
+      // original e a imagem do storage (escopo do usuário garantido por RLS).
+      if (entry.imported_print_id) {
+        try {
+          const { data: ip } = await supabase
+            .from("imported_prints")
+            .select("image_url")
+            .eq("id", entry.imported_print_id)
+            .maybeSingle();
+          await deleteImportedPrint(entry.imported_print_id, ip?.image_url ?? null);
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : "erro desconhecido";
+          toast.warning(`Registro excluído, mas o print original não foi removido: ${msg}`);
+          return;
+        }
+      }
+
       toast.success("Registro excluído.");
     } finally {
       setDeletingId(null);
+      setConfirmDelete(null);
     }
   }
 
