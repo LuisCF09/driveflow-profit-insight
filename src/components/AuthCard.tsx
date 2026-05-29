@@ -23,7 +23,8 @@ export function AuthCard() {
     const m = message.toLowerCase();
     if (m.includes("invalid login")) return "Email ou senha incorretos.";
     if (m.includes("already registered") || m.includes("user already")) return "Este email já está cadastrado. Faça login.";
-    if (m.includes("pwned") || m.includes("leaked") || m.includes("compromised") || m.includes("weak password")) return "Esta senha é muito comum ou foi vazada em outros sites. Escolha uma senha mais forte (combine letras, números e símbolos).";
+    if (m.includes("pwned") || m.includes("leaked") || m.includes("compromised")) return "Esta senha já apareceu em vazamentos públicos e foi bloqueada por segurança. Use uma combinação única (ex.: 3 palavras aleatórias + número + símbolo).";
+    if (m.includes("weak password")) return "Senha muito fraca. Combine letras maiúsculas, minúsculas, números e símbolos.";
     if (m.includes("at least") && m.includes("character")) return "A senha deve ter pelo menos 6 caracteres.";
     if (m.includes("password should") || m.includes("password must")) return "Senha não atende aos requisitos. Tente uma combinação mais forte.";
     if (m.includes("password")) return message;
@@ -34,6 +35,7 @@ export function AuthCard() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (loading) return;
+    setFormError(null);
     setLoading(true);
     try {
       if (mode === "signup") {
