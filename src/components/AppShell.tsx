@@ -26,10 +26,14 @@ export function AppShell({ children, title, onChanged }: { children: ReactNode; 
 
   useEffect(() => {
     (async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { navigate({ to: "/" }); return; }
-      const { data: p } = await supabase.from("profiles").select("name").eq("id", user.id).maybeSingle();
-      setUserName(p?.name || user.email || "");
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) { navigate({ to: "/" }); return; }
+        const { data: p } = await supabase.from("profiles").select("name").eq("id", user.id).maybeSingle();
+        setUserName(p?.name || user.email || "");
+      } catch (err) {
+        console.error("[AppShell] profile load failed", err);
+      }
     })();
   }, [navigate]);
 
