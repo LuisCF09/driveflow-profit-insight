@@ -1,25 +1,33 @@
 import { ReactNode, useEffect, useState } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, Car, Receipt, Target, FileBarChart, User, Crown, LogOut, Menu, X, Plus, CalendarDays, HelpCircle, ImageUp, History } from "lucide-react";
+import { LayoutDashboard, FileBarChart, Settings, Crown, LogOut, Menu, X, Plus, HelpCircle, ImageUp, History, PlusCircle, type LucideIcon } from "lucide-react";
 import { DriveFlowLogo } from "@/components/DriveFlowLogo";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { AddRideDialog } from "@/components/AddRideDialog";
 
-const NAV = [
-  { to: "/dashboard", label: "Painel", icon: LayoutDashboard },
-  { to: "/daily-report", label: "Relatório de hoje", icon: CalendarDays },
-  { to: "/rides", label: "Corridas", icon: Car },
-  { to: "/expenses", label: "Despesas", icon: Receipt },
-  { to: "/goals", label: "Metas", icon: Target },
-  { to: "/reports", label: "Relatórios", icon: FileBarChart },
-  { to: "/historico", label: "Histórico", icon: History },
-  { to: "/como-funciona", label: "Como funciona", icon: HelpCircle },
-  { to: "/importar-print", label: "Importar Print", icon: ImageUp },
-  { to: "/profile", label: "Perfil", icon: User },
-  { to: "/planos", label: "Planos", icon: Crown },
-  { to: "/premium", label: "Premium", icon: Crown },
-] as const;
+type NavItem =
+  | { type: "link"; to: string; label: string; icon: LucideIcon; badge?: string }
+  | { type: "action"; action: "add-record"; label: string; icon: LucideIcon };
+
+const NAV: NavItem[] = [
+  { type: "link", to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { type: "action", action: "add-record", label: "Adicionar Registro", icon: PlusCircle },
+  { type: "link", to: "/importar-print", label: "Importar Print", icon: ImageUp, badge: "Premium" },
+  { type: "link", to: "/historico", label: "Histórico Financeiro", icon: History },
+  { type: "link", to: "/reports", label: "Relatórios", icon: FileBarChart },
+  { type: "link", to: "/como-funciona", label: "Como funciona", icon: HelpCircle },
+  { type: "link", to: "/planos", label: "Planos", icon: Crown },
+  { type: "link", to: "/profile", label: "Configurações", icon: Settings },
+];
+
+function PremiumBadge() {
+  return (
+    <span className="ml-auto rounded-full bg-gradient-primary px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-primary-foreground shadow-glow">
+      Premium
+    </span>
+  );
+}
 
 export function AppShell({ children, title, onChanged }: { children: ReactNode; title: string; onChanged?: () => void }) {
   const navigate = useNavigate();
@@ -56,11 +64,25 @@ export function AppShell({ children, title, onChanged }: { children: ReactNode; 
         <div className="px-6 py-5"><DriveFlowLogo /></div>
         <nav className="flex-1 space-y-1 px-3">
           {NAV.map((n) => {
-            const active = pathname === n.to;
             const Icon = n.icon;
+            if (n.type === "action") {
+              return (
+                <button
+                  key={n.label}
+                  onClick={() => setAddOpen(true)}
+                  className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-card/60 hover:text-foreground"
+                >
+                  <Icon className="h-4 w-4" />
+                  {n.label}
+                </button>
+              );
+            }
+            const active = pathname === n.to;
             return (
               <Link key={n.to} to={n.to} className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors ${active ? "bg-primary/15 text-foreground ring-1 ring-primary/30" : "text-muted-foreground hover:bg-card/60 hover:text-foreground"}`}>
-                <Icon className="h-4 w-4" />{n.label}
+                <Icon className="h-4 w-4" />
+                <span>{n.label}</span>
+                {n.badge === "Premium" && <PremiumBadge />}
               </Link>
             );
           })}
@@ -80,10 +102,24 @@ export function AppShell({ children, title, onChanged }: { children: ReactNode; 
             <div className="flex items-center justify-between px-2 pb-4"><DriveFlowLogo /><button onClick={() => setOpen(false)}><X className="h-5 w-5" /></button></div>
             <nav className="space-y-1">
               {NAV.map((n) => {
-                const active = pathname === n.to; const Icon = n.icon;
+                const Icon = n.icon;
+                if (n.type === "action") {
+                  return (
+                    <button
+                      key={n.label}
+                      onClick={() => { setAddOpen(true); setOpen(false); }}
+                      className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-muted-foreground"
+                    >
+                      <Icon className="h-4 w-4" /> {n.label}
+                    </button>
+                  );
+                }
+                const active = pathname === n.to;
                 return (
                   <Link key={n.to} to={n.to} onClick={() => setOpen(false)} className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm ${active ? "bg-primary/15 text-foreground" : "text-muted-foreground"}`}>
-                    <Icon className="h-4 w-4" /> {n.label}
+                    <Icon className="h-4 w-4" />
+                    <span>{n.label}</span>
+                    {n.badge === "Premium" && <PremiumBadge />}
                   </Link>
                 );
               })}
