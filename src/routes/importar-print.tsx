@@ -228,8 +228,82 @@ function ImportarPrintPage() {
       setImportedPrintId(inserted?.id ?? null);
       setUploaded(true);
       setDetected(sim);
+      setEntrySource("ai");
       setMode("view");
       toast.success("Print analisado em modo de simulação. Revise os dados.");
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Erro inesperado.";
+      toast.error(msg);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function preencherManual() {
+    if (!file) return;
+    setLoading(true);
+    try {
+      const { data: userData, error: userErr } = await supabase.auth.getUser();
+      if (userErr || !userData.user) {
+        toast.error("Você precisa estar autenticado para enviar um print.");
+        return;
+      }
+      const userId = userData.user.id;
+      const path = `${userId}/${Date.now()}-${sanitizeFilename(file.name)}`;
+
+      const { error: upErr } = await supabase.storage
+        .from("imported-prints")
+        .upload(path, file, { contentType: file.type, upsert: false });
+      if (upErr) {
+        toast.error(`Falha no upload: ${upErr.message}`);
+        return;
+      }
+
+      const { data: signed, error: signErr } = await supabase.storage
+        .from("imported-prints")
+        .createSignedUrl(path, 60 * 60 * 24 * 365);
+      if (signErr) {
+        toast.error(`Falha ao gerar URL: ${signErr.message}`);
+        return;
+      }
+
+      const empty: DetectedData = {
+        platform: plataforma,
+        entryDate: todayISO(),
+        grossEarnings: "",
+        workedHours: "",
+        tripsCount: "",
+        kilometers: "",
+        tips: "",
+        fees: "",
+        confidence: 1,
+        notes: "",
+      };
+
+      const { data: inserted, error: insErr } = await supabase
+        .from("imported_prints")
+        .insert({
+          user_id: userId,
+          platform_name: empty.platform,
+          image_url: signed.signedUrl,
+          status: "pending_review",
+          entry_date: empty.entryDate,
+          notes: "Preenchimento manual.",
+        })
+        .select("id")
+        .single();
+      if (insErr) {
+        toast.error(`Falha ao salvar comprovante: ${insErr.message}`);
+        return;
+      }
+
+      setImportedPrintId(inserted?.id ?? null);
+      setUploaded(true);
+      setDetected(empty);
+      setEntrySource("manual");
+      setSnapshot({ ...empty });
+      setMode("edit");
+      toast.success("Comprovante enviado. Preencha os dados abaixo.");
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Erro inesperado.";
       toast.error(msg);
