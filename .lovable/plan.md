@@ -1,24 +1,24 @@
-Create a new table `platform_entries` to store official financial records per platform, used by the dashboard for profit, hourly earnings, cost-per-km, and performance calculations.
+Implementar upload da imagem do print para Supabase Storage e registrar o print na tabela `imported_prints`.
 
-**Database changes**
-1. Create `platform_entries` table with the following columns:
-   - `user_id` (links to auth.users, cascade on delete)
-   - `platform_name` (required)
-   - `entry_date` (required)
-   - `gross_earnings` (required)
-   - `worked_hours`
-   - `trips_count`
-   - `kilometers`
-   - `fuel_cost`
-   - `extra_costs`
-   - `source` (defaults to 'manual')
-   - `imported_print_id` (optional foreign key to imported_prints)
-   - `notes`
-2. Add GRANT permissions for authenticated and service_role users.
-3. Enable Row Level Security (RLS) on the table.
-4. Create four RLS policies so each authenticated user can only view, create, edit, and delete their own records.
-5. Create an index on `user_id` for query performance.
+**Banco de dados (migration)**
+- Criar bucket `imported-prints` (privado) via `storage.buckets`.
+- Políticas em `storage.objects` para o bucket:
+  - SELECT: usuários autenticados podem ver apenas arquivos dentro da própria pasta (`auth.uid()::text = (storage.foldername(name))[1]`).
+  - INSERT: mesma regra para upload.
+  - UPDATE/DELETE: mesma regra (para permitir trocar/remover).
 
-**Out of scope**
-- No frontend changes.
-- No modifications to existing tables.
+**Frontend — `src/routes/importar-print.tsx`**
+- Obter usuário atual via `supabase.auth.getUser()`; se não autenticado, mostrar erro.
+- Ao clicar em "Analisar print":
+  1. Sanitizar o nome do arquivo (remover espaços/acentos).
+  2. Gerar caminho `user_id/{timestamp}-{nome}`.
+  3. `supabase.storage.from('imported-prints').upload(path, file)`.
+  4. Obter URL via `createSignedUrl` (bucket privado, 1 ano).
+  5. Inserir em `imported_prints` com: `user_id`, `platform_name`, `image_url` (caminho do storage), `status='pending_review'`.
+  6. Mostrar toast de sucesso; manter preview da imagem na tela.
+  7. Em qualquer falha, toast de erro com mensagem.
+- Mostrar estado "enviado" abaixo do preview (badge "Enviado · aguardando revisão").
+
+**Fora de escopo**
+- Não gravar nada em `platform_entries`.
+- Sem extração de dados por IA.
