@@ -17,10 +17,14 @@ import {
   ListChecks,
   RotateCcw,
   PartyPopper,
+  Crown,
+  Lock,
+  Hand,
 } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useSubscription } from "@/hooks/use-subscription";
 
 export const Route = createFileRoute("/importar-print")({
   head: () => ({
@@ -109,6 +113,7 @@ function formatDateBR(iso: string) {
 }
 
 function ImportarPrintPage() {
+  const { isPremium, loading: subLoading } = useSubscription();
   const [savedState, setSavedState] = useState<{ importedPrintId: string; platformEntryId: string } | null>(null);
   const [plataforma, setPlataforma] = useState<string>("Uber");
   const [file, setFile] = useState<File | null>(null);
@@ -119,6 +124,7 @@ function ImportarPrintPage() {
   const [detected, setDetected] = useState<DetectedData | null>(null);
   const [snapshot, setSnapshot] = useState<DetectedData | null>(null);
   const [mode, setMode] = useState<"view" | "edit">("view");
+  const [entrySource, setEntrySource] = useState<"ai" | "manual">("ai");
   const [saving, setSaving] = useState(false);
   const [importedPrintId, setImportedPrintId] = useState<string | null>(null);
   const [touched, setTouched] = useState(false);
@@ -222,8 +228,82 @@ function ImportarPrintPage() {
       setImportedPrintId(inserted?.id ?? null);
       setUploaded(true);
       setDetected(sim);
+      setEntrySource("ai");
       setMode("view");
       toast.success("Print analisado em modo de simulação. Revise os dados.");
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Erro inesperado.";
+      toast.error(msg);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function preencherManual() {
+    if (!file) return;
+    setLoading(true);
+    try {
+      const { data: userData, error: userErr } = await supabase.auth.getUser();
+      if (userErr || !userData.user) {
+        toast.error("Você precisa estar autenticado para enviar um print.");
+        return;
+      }
+      const userId = userData.user.id;
+      const path = `${userId}/${Date.now()}-${sanitizeFilename(file.name)}`;
+
+      const { error: upErr } = await supabase.storage
+        .from("imported-prints")
+        .upload(path, file, { contentType: file.type, upsert: false });
+      if (upErr) {
+        toast.error(`Falha no upload: ${upErr.message}`);
+        return;
+      }
+
+      const { data: signed, error: signErr } = await supabase.storage
+        .from("imported-prints")
+        .createSignedUrl(path, 60 * 60 * 24 * 365);
+      if (signErr) {
+        toast.error(`Falha ao gerar URL: ${signErr.message}`);
+        return;
+      }
+
+      const empty: DetectedData = {
+        platform: plataforma,
+        entryDate: todayISO(),
+        grossEarnings: "",
+        workedHours: "",
+        tripsCount: "",
+        kilometers: "",
+        tips: "",
+        fees: "",
+        confidence: 1,
+        notes: "",
+      };
+
+      const { data: inserted, error: insErr } = await supabase
+        .from("imported_prints")
+        .insert({
+          user_id: userId,
+          platform_name: empty.platform,
+          image_url: signed.signedUrl,
+          status: "pending_review",
+          entry_date: empty.entryDate,
+          notes: "Preenchimento manual.",
+        })
+        .select("id")
+        .single();
+      if (insErr) {
+        toast.error(`Falha ao salvar comprovante: ${insErr.message}`);
+        return;
+      }
+
+      setImportedPrintId(inserted?.id ?? null);
+      setUploaded(true);
+      setDetected(empty);
+      setEntrySource("manual");
+      setSnapshot({ ...empty });
+      setMode("edit");
+      toast.success("Comprovante enviado. Preencha os dados abaixo.");
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Erro inesperado.";
       toast.error(msg);
@@ -427,6 +507,31 @@ function ImportarPrintPage() {
           </p>
         </section>
 
+        {/* Aviso Premium para usuários grátis */}
+        {!subLoading && !isPremium && (
+          <section className="flex flex-col gap-3 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-3">
+              <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-500/20 ring-1 ring-amber-500/30">
+                <Lock className="h-4 w-4 text-amber-300" />
+              </div>
+              <div className="text-sm text-amber-100">
+                <div className="font-medium text-amber-50">Função Premium</div>
+                <p className="mt-0.5 text-amber-200/90">
+                  Leitura inteligente de prints é uma função Premium. No plano grátis,
+                  você ainda pode preencher os dados manualmente.
+                </p>
+              </div>
+            </div>
+            <Link
+              to="/premium"
+              className="bg-gradient-primary shadow-glow inline-flex shrink-0 items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold text-primary-foreground"
+            >
+              <Crown className="h-4 w-4" />
+              Ver planos
+            </Link>
+          </section>
+        )}
+
         {/* Formulário */}
         <section className="glass rounded-2xl p-5 sm:p-6">
           {/* Plataforma */}
@@ -531,13 +636,33 @@ function ImportarPrintPage() {
             />
           </div>
 
-          {/* Botão analisar */}
-          <div className="mt-6 flex justify-end">
+          {/* Botões de ação */}
+          <div className="mt-6 flex flex-col-reverse items-stretch gap-2 sm:flex-row sm:items-center sm:justify-end">
             <button
               type="button"
-              onClick={analisar}
+              onClick={preencherManual}
               disabled={!file || loading || uploaded}
-              className="bg-gradient-primary shadow-glow inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-primary-foreground transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-border/60 bg-card/60 px-5 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-card/80 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <Hand className="h-4 w-4" />
+              Preencher manualmente
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                if (!isPremium) {
+                  toast.info("Leitura inteligente é exclusiva do Premium. Use 'Preencher manualmente'.");
+                  return;
+                }
+                analisar();
+              }}
+              disabled={!file || loading || uploaded}
+              title={!isPremium ? "Função Premium" : undefined}
+              className={`inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold transition-opacity disabled:cursor-not-allowed disabled:opacity-50 ${
+                isPremium
+                  ? "bg-gradient-primary shadow-glow text-primary-foreground"
+                  : "border border-amber-500/40 bg-amber-500/10 text-amber-200 hover:bg-amber-500/15"
+              }`}
             >
               {loading ? (
                 <>
@@ -546,8 +671,8 @@ function ImportarPrintPage() {
                 </>
               ) : (
                 <>
-                  <Sparkles className="h-4 w-4" />
-                  Analisar print
+                  {isPremium ? <Sparkles className="h-4 w-4" /> : <Crown className="h-4 w-4" />}
+                  {isPremium ? "Analisar print" : "Analisar print (Premium)"}
                 </>
               )}
             </button>
@@ -558,7 +683,7 @@ function ImportarPrintPage() {
         <section className="glass rounded-2xl p-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="font-display text-lg font-semibold">Revisão dos dados</h2>
-            {detected && (
+            {detected && entrySource === "ai" && (
               <span
                 className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs ${
                   confidenceMeta(detected.confidence).cls
@@ -585,14 +710,25 @@ function ImportarPrintPage() {
             </div>
           ) : (
             <div className="mt-4 space-y-4">
-              <div className="flex items-start gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
-                <FlaskConical className="mt-0.5 h-4 w-4 shrink-0" />
-                <span>
-                  <strong className="font-semibold">Modo de simulação:</strong> a leitura
-                  inteligente ainda não está ativa. Revise as informações abaixo — nada é
-                  salvo até você clicar em <em>Confirmar e salvar</em>.
-                </span>
-              </div>
+              {entrySource === "ai" ? (
+                <div className="flex items-start gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+                  <FlaskConical className="mt-0.5 h-4 w-4 shrink-0" />
+                  <span>
+                    <strong className="font-semibold">Modo de simulação:</strong> a leitura
+                    inteligente ainda não está ativa. Revise as informações abaixo — nada é
+                    salvo até você clicar em <em>Confirmar e salvar</em>.
+                  </span>
+                </div>
+              ) : (
+                <div className="flex items-start gap-2 rounded-xl border border-border/60 bg-card/30 px-3 py-2 text-xs text-muted-foreground">
+                  <Hand className="mt-0.5 h-4 w-4 shrink-0 text-[var(--neon)]" />
+                  <span>
+                    <strong className="font-semibold text-foreground">Preenchimento manual:</strong>{" "}
+                    informe os dados do print abaixo. Nada é salvo até você clicar em{" "}
+                    <em>Confirmar e salvar</em>.
+                  </span>
+                </div>
+              )}
 
               {mode === "view" ? (
                 <div className="grid grid-cols-1 gap-x-4 gap-y-3 sm:grid-cols-2">
