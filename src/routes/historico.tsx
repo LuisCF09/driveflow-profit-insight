@@ -87,6 +87,7 @@ function HistoricoPage() {
   const [editing, setEditing] = useState<Entry | null>(null);
   const [savingEdit, setSavingEdit] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<Entry | null>(null);
 
   async function load() {
     setLoading(true);
