@@ -142,6 +142,65 @@ export type Database = {
         }
         Relationships: []
       }
+      platform_entries: {
+        Row: {
+          created_at: string
+          entry_date: string
+          extra_costs: number | null
+          fuel_cost: number | null
+          gross_earnings: number
+          id: string
+          imported_print_id: string | null
+          kilometers: number | null
+          notes: string | null
+          platform_name: string
+          source: string | null
+          trips_count: number | null
+          user_id: string
+          worked_hours: number | null
+        }
+        Insert: {
+          created_at?: string
+          entry_date: string
+          extra_costs?: number | null
+          fuel_cost?: number | null
+          gross_earnings: number
+          id?: string
+          imported_print_id?: string | null
+          kilometers?: number | null
+          notes?: string | null
+          platform_name: string
+          source?: string | null
+          trips_count?: number | null
+          user_id: string
+          worked_hours?: number | null
+        }
+        Update: {
+          created_at?: string
+          entry_date?: string
+          extra_costs?: number | null
+          fuel_cost?: number | null
+          gross_earnings?: number
+          id?: string
+          imported_print_id?: string | null
+          kilometers?: number | null
+          notes?: string | null
+          platform_name?: string
+          source?: string | null
+          trips_count?: number | null
+          user_id?: string
+          worked_hours?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_entries_imported_print_id_fkey"
+            columns: ["imported_print_id"]
+            isOneToOne: false
+            referencedRelation: "imported_prints"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           cpf: string | null
