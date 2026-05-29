@@ -25,6 +25,7 @@ import { AppShell } from "@/components/AppShell";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useSubscription } from "@/hooks/use-subscription";
+import { analyzePrintImage } from "@/lib/analyze-print";
 
 export const Route = createFileRoute("/importar-print")({
   head: () => ({
@@ -188,35 +189,41 @@ function ImportarPrintPage() {
         return;
       }
 
-      const sim: DetectedData = {
-        platform: plataforma,
-        entryDate: todayISO(),
-        grossEarnings: "186.40",
-        workedHours: "7.5",
-        tripsCount: "18",
-        kilometers: "94.2",
-        tips: "12.00",
-        fees: "0",
-        confidence: 0.87,
-        notes: "Dados gerados em modo de simulação.",
+      const result = await analyzePrintImage({
+        image_url: signed.signedUrl,
+        platform_name: plataforma,
+        user_id: userId,
+      });
+
+      const detectedFromAI: DetectedData = {
+        platform: result.platform_name,
+        entryDate: result.entry_date ?? todayISO(),
+        grossEarnings: result.gross_earnings != null ? String(result.gross_earnings) : "",
+        workedHours: result.worked_hours != null ? String(result.worked_hours) : "",
+        tripsCount: result.trips_count != null ? String(result.trips_count) : "",
+        kilometers: result.kilometers != null ? String(result.kilometers) : "",
+        tips: result.tips != null ? String(result.tips) : "",
+        fees: result.fees != null ? String(result.fees) : "",
+        confidence: result.confidence,
+        notes: result.notes,
       };
 
       const { data: inserted, error: insErr } = await supabase
         .from("imported_prints")
         .insert({
           user_id: userId,
-          platform_name: sim.platform,
+          platform_name: result.platform_name,
           image_url: signed.signedUrl,
           status: "pending_review",
-          entry_date: sim.entryDate,
-          gross_earnings: Number(sim.grossEarnings),
-          worked_hours: Number(sim.workedHours),
-          trips_count: Number(sim.tripsCount),
-          kilometers: Number(sim.kilometers),
-          tips: Number(sim.tips),
-          fees: Number(sim.fees),
-          confidence: sim.confidence,
-          notes: sim.notes,
+          entry_date: result.entry_date,
+          gross_earnings: result.gross_earnings,
+          worked_hours: result.worked_hours,
+          trips_count: result.trips_count,
+          kilometers: result.kilometers,
+          tips: result.tips,
+          fees: result.fees,
+          confidence: result.confidence,
+          notes: result.notes,
         })
         .select("id")
         .single();
@@ -227,10 +234,10 @@ function ImportarPrintPage() {
 
       setImportedPrintId(inserted?.id ?? null);
       setUploaded(true);
-      setDetected(sim);
+      setDetected(detectedFromAI);
       setEntrySource("ai");
       setMode("view");
-      toast.success("Print analisado em modo de simulação. Revise os dados.");
+      toast.success("Print analisado. Revise os dados antes de salvar.");
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Erro inesperado.";
       toast.error(msg);
