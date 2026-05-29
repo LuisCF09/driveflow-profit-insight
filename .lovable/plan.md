@@ -1,45 +1,31 @@
-## Objetivo
-Eliminar a tela “This page didn’t load” sem mudar o visual principal, atacando as causas mais prováveis de crash no fluxo real de uso.
+# Corrigir UX do erro "senha vazada" no cadastro
 
-## O que vou corrigir
-1. Endurecer os fluxos de autenticação e pós-login
-- Revisar `AuthCard`, onboarding e navegação pós-login/cadastro.
-- Garantir que email e Google não redirecionem para telas que dependem de dados ainda inexistentes.
-- Garantir criação/atualização de `profiles` de forma consistente antes de telas que leem nome do usuário.
+## Causa
+O Supabase Auth está com **Leaked Password Protection (HIBP)** ativo. Quando o usuário escolhe uma senha que já vazou publicamente, o signup retorna `code: "weak_password"` com `reasons: ["pwned"]` e mensagem em inglês. A proteção está correta — só a UX precisa melhorar.
 
-2. Remover pontos de crash por dados ausentes ou schema divergente
-- Revisar `AppShell`, `useDriveFlowData`, `useSubscription`, `dashboard`, `reports`, `rides`, `expenses`, `profile`.
-- Tornar consultas tolerantes a perfil, veículo, corridas, despesas e assinatura ausentes.
-- Padronizar os campos usados no frontend para não depender de colunas erradas ou opcionais sem fallback.
+## Mudanças (apenas frontend, sem alterar design)
 
-3. Blindar efeitos assíncronos que hoje podem quebrar a renderização
-- Envolver leituras críticas de sessão e banco em `try/catch` com tratamento explícito.
-- Evitar que falhas de `supabase.auth.getUser()` ou consultas em `profiles/vehicles/subscriptions` derrubem a página.
-- Converter falhas em estados seguros: loading, redirect ou estado vazio, em vez de erro global.
+### 1. `src/components/AuthCard.tsx` — tratar erro do Supabase
+No `catch` do `handleSubmit`, mapear códigos de erro para mensagens em português antes de exibir o toast:
 
-4. Corrigir inconsistências entre landing, dashboard e rotas autenticadas
-- Revisar a lógica que hoje mistura home pública com rotas autenticadas sem guarda central.
-- Garantir que usuário sem veículo vá para onboarding com segurança.
-- Garantir que usuário sem assinatura/dados continue vendo a app sem crash.
+- `weak_password` + `reasons.includes("pwned")` → "Essa senha já apareceu em vazamentos públicos. Escolha uma senha diferente, de preferência única para esta conta."
+- `weak_password` (outros motivos) → "Senha muito fraca. Use ao menos 8 caracteres, misturando letras, números e símbolos."
+- `user_already_exists` / `email_exists` → "Já existe uma conta com este email. Tente fazer login."
+- `invalid_credentials` → "Email ou senha incorretos."
+- `over_email_send_rate_limit` → "Muitas tentativas. Aguarde alguns minutos e tente novamente."
+- Fallback: usar `error.message` original.
 
-5. Validar o fluxo completo que hoje parece intermitente
-- Testar home pública.
-- Testar criar conta.
-- Testar login.
-- Testar entrada pelo Google.
-- Testar navegação para dashboard/profile/reports com dados vazios.
-- Confirmar que a tela de erro não reaparece nesses caminhos.
+Aplicar o mesmo mapeamento tanto no fluxo de signup quanto de login.
 
-## Suspeitas principais já encontradas
-- O erro não aparece de forma estável na home atual; isso indica problema intermitente de runtime e não um layout quebrado.
-- Há vários pontos com leitura assíncrona direta de auth e banco sem proteção, especialmente em `AppShell`, `dashboard`, `profile`, `useDriveFlowData` e `useSubscription`.
-- O frontend ainda depende de campos potencialmente inconsistentes (`name`, `date` e afins), o que pode quebrar após login, cadastro ou quando o banco retorna dados incompletos.
+### 2. `src/components/AuthCard.tsx` — feedback inline imediato
+Manter o indicador de força de senha atual. Ao receber o erro `pwned`, além do toast, exibir uma mensagem inline em vermelho logo abaixo do campo Senha (mesmo estilo visual já existente) dizendo: "Senha encontrada em vazamentos públicos." Limpar essa mensagem quando o usuário editar o campo.
 
-## Se precisar de backend
-Se eu confirmar que a origem é incompatibilidade real de schema/política no banco, primeiro vou gerar o SQL e te mostrar antes de qualquer alteração backend.
+### 3. Sem mudanças no backend
+- Não desativar a proteção HIBP — ela é importante.
+- Não alterar tabelas, RLS, nem `configure_auth`.
+- Não mexer em design tokens, layout ou cores existentes.
 
-## Resultado esperado
-- A home abre sempre.
-- Login/cadastro não derrubam a app.
-- Dashboard e telas autenticadas sobrevivem a dados faltantes.
-- Em caso de problema de dados, o usuário vê mensagem ou redirecionamento seguro, não a tela fatal de erro.
+## Resultado
+- Usuário entende em português por que a senha foi rejeitada.
+- Feedback aparece junto ao campo, não só num toast.
+- Demais erros de auth também ficam traduzidos consistentemente.
