@@ -10,15 +10,21 @@ export function useDriveFlowData() {
 
   const reload = useCallback(async () => {
     setLoading(true);
-    const [{ data: r }, { data: e }, { data: v }] = await Promise.all([
-      supabase.from("rides").select("*").order("date", { ascending: false }),
-      supabase.from("expenses").select("*").order("date", { ascending: false }),
-      supabase.from("vehicles").select("*").eq("is_active", true).limit(1),
-    ]);
-    setRides((r as Ride[]) || []);
-    setExpenses((e as Expense[]) || []);
-    setVehicle((v?.[0] as Vehicle) || null);
-    setLoading(false);
+    try {
+      const [ridesRes, expRes, vehRes] = await Promise.all([
+        supabase.from("rides").select("*").order("date", { ascending: false }),
+        supabase.from("expenses").select("*").order("date", { ascending: false }),
+        supabase.from("vehicles").select("*").eq("is_active", true).limit(1),
+      ]);
+      setRides((ridesRes.data as Ride[]) || []);
+      setExpenses((expRes.data as Expense[]) || []);
+      setVehicle((vehRes.data?.[0] as Vehicle) || null);
+    } catch (err) {
+      console.error("[useDriveFlowData] reload failed", err);
+      setRides([]); setExpenses([]); setVehicle(null);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => { reload(); }, [reload]);
