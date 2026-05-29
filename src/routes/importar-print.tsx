@@ -13,6 +13,10 @@ import {
   Pencil,
   Check,
   Ban,
+  LayoutDashboard,
+  ListChecks,
+  RotateCcw,
+  PartyPopper,
 } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { toast } from "sonner";
