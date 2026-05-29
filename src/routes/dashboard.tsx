@@ -16,6 +16,8 @@ export const Route = createFileRoute("/dashboard")({
 
 const RANGES = [7, 15, 30, 90, 365] as const;
 
+type PE = { gross_earnings: number | null; fuel_cost: number | null; extra_costs: number | null };
+
 function DashboardPage() {
   const navigate = useNavigate();
   const { rides: allRides, expenses: allExpenses, vehicle, loading, reload } = useDriveFlowData();
@@ -23,6 +25,7 @@ function DashboardPage() {
   const [checked, setChecked] = useState(false);
   const [range, setRange] = useState<(typeof RANGES)[number]>(30);
   const [addOpen, setAddOpen] = useState(false);
+  const [platformEntries, setPlatformEntries] = useState<PE[]>([]);
 
   useEffect(() => {
     (async () => {
@@ -31,6 +34,11 @@ function DashboardPage() {
         if (!user) { navigate({ to: "/" }); return; }
         const { data: v } = await supabase.from("vehicles").select("id").limit(1);
         if (!v || v.length === 0) { navigate({ to: "/onboarding" }); return; }
+        const { data: pe } = await supabase
+          .from("platform_entries")
+          .select("gross_earnings,fuel_cost,extra_costs")
+          .eq("user_id", user.id);
+        setPlatformEntries((pe as PE[]) || []);
         setChecked(true);
       } catch (err) {
         console.error("[dashboard] init failed", err);
@@ -53,6 +61,16 @@ function DashboardPage() {
   const liters = vehicle?.km_per_liter ? month.km / vehicle.km_per_liter : 0;
   const perHour = month.hours > 0 ? month.profit / month.hours : 0;
   const perKm = month.km > 0 ? (month.fuel + month.wear + month.exp) / month.km : 0;
+
+  const netSummary = useMemo(() => {
+    const gross = platformEntries.reduce((s, e) => s + Number(e.gross_earnings ?? 0), 0);
+    const fuel = platformEntries.reduce((s, e) => s + Number(e.fuel_cost ?? 0), 0);
+    const extra = platformEntries.reduce((s, e) => s + Number(e.extra_costs ?? 0), 0);
+    const costs = fuel + extra;
+    const net = gross - costs;
+    const margin = gross > 0 ? (net / gross) * 100 : 0;
+    return { gross, costs, net, margin };
+  }, [platformEntries]);
 
   if (!checked || loading || subLoading) {
     return <div className="bg-hero flex min-h-screen items-center justify-center text-sm text-muted-foreground">Carregando...</div>;
