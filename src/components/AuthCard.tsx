@@ -66,8 +66,11 @@ export function AuthCard() {
         setMode("login");
       }
     } catch (err) {
+      console.error("[auth]", mode, err);
       const msg = err instanceof Error ? err.message : "Algo deu errado.";
-      toast.error(translateError(msg));
+      const translated = translateError(msg);
+      setFormError(translated);
+      toast.error(translated);
     } finally {
       setLoading(false);
     }
