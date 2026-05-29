@@ -446,12 +446,11 @@ function ImportarPrintPage() {
       return;
     }
     try {
-      await supabase
-        .from("imported_prints")
-        .update({ status: "discarded" })
-        .eq("id", importedPrintId);
-    } catch {
-      /* não bloqueia o cancelamento na UI */
+      await deleteImportedPrint(importedPrintId, importedImageUrl);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Erro inesperado.";
+      toast.error(`Falha ao cancelar: ${msg}`);
+      return;
     }
     toast("Importação cancelada.");
     clearAll();
