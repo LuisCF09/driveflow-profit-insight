@@ -507,6 +507,31 @@ function ImportarPrintPage() {
           </p>
         </section>
 
+        {/* Aviso Premium para usuários grátis */}
+        {!subLoading && !isPremium && (
+          <section className="flex flex-col gap-3 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-3">
+              <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-500/20 ring-1 ring-amber-500/30">
+                <Lock className="h-4 w-4 text-amber-300" />
+              </div>
+              <div className="text-sm text-amber-100">
+                <div className="font-medium text-amber-50">Função Premium</div>
+                <p className="mt-0.5 text-amber-200/90">
+                  Leitura inteligente de prints é uma função Premium. No plano grátis,
+                  você ainda pode preencher os dados manualmente.
+                </p>
+              </div>
+            </div>
+            <Link
+              to="/premium"
+              className="bg-gradient-primary shadow-glow inline-flex shrink-0 items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold text-primary-foreground"
+            >
+              <Crown className="h-4 w-4" />
+              Ver planos
+            </Link>
+          </section>
+        )}
+
         {/* Formulário */}
         <section className="glass rounded-2xl p-5 sm:p-6">
           {/* Plataforma */}
