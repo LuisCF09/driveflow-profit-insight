@@ -1,23 +1,44 @@
-No dashboard principal (src/routes/dashboard.tsx), adicionar o cálculo de lucro líquido estimado com base nos dados da tabela `platform_entries` do usuário logado.
+## Objetivo
+Adicionar lógica visual de plano Premium na tela "Importar Print" do DriveFlow, sem quebrar o fluxo atual.
 
-1. Buscar registros da tabela `platform_entries` para o usuário autenticado (somente o que ele possui, via RLS).
+## Contexto atual
+- O hook `useSubscription` já existe (`src/hooks/use-subscription.ts`) e lê da tabela `subscriptions`.
+- A rota `/premium` já existe (`src/routes/premium.tsx`).
+- A tela "Importar Print" (`src/routes/importar-print.tsx`) não possui nenhuma verificação de plano.
+- A leitura inteligente de prints ainda opera em modo de simulação (dados mockados).
 
-2. Calcular métricas:
-   - Ganho bruto total = soma de `gross_earnings`
-   - Custo de combustível total = soma de `fuel_cost` (null como 0)
-   - Custos extras total = soma de `extra_costs` (null como 0)
-   - Custos totais = combustível + extras
-   - Lucro líquido = ganho bruto − custos totais
-   - Margem de lucro = (lucro / ganho bruto) × 100. Se bruto = 0, margem = 0 para evitar divisão.
+## O que será alterado
 
-3. Adicionar cards visuais no dashboard (junto aos cards existentes):
-   - Ganho bruto
-   - Custos totais
-   - Lucro líquido
-   - Margem de lucro (%)
+### 1. Banner de aviso para usuários Free
+Na tela `importar-print.tsx`, abaixo do hero e acima do formulário de upload, adicionar um banner condicional visível apenas quando `!isPremium`.
 
-4. Incluir texto explicativo abaixo dos cards: "Esse é o valor estimado que sobrou depois dos custos informados."
+Conteúdo do banner:
+- Ícone de cadeado ou alerta
+- Texto: "Leitura inteligente de prints é uma função Premium. No plano grátis, você ainda pode preencher os dados manualmente."
+- Botão "Ver planos" com link para `/premium`
 
-5. Se não houver registros em `platform_entries`, manter o empty state atual do dashboard sem alterar sua mensagem.
+### 2. Comportamento do botão "Analisar print"
+- **Premium (`isPremium = true`)**: mantém o comportamento atual. Clica em "Analisar print" → gera dados simulados → mostra seção de revisão.
+- **Free (`isPremium = false`)**: o botão "Analisar print" será desabilitado com tooltip/estilo visual indicando que é Premium. Ao clicar, exibe um `toast.info("Leitura inteligente é exclusiva do Premium.")` em vez de processar.
 
-Nenhuma alteração de schema ou tabela é necessária. Apenas leitura e cálculo no frontend.
+### 3. Fluxo de preenchimento manual para Free
+Free users precisam poder preencher os dados sem usar a leitura inteligente. Implementação:
+- Adicionar um segundo botão ao lado de "Analisar print" (visível para free): **"Preencher manualmente"**.
+- Ao clicar, abre a seção de revisão diretamente no modo `edit` com um objeto `DetectedData` vazio (campos default vazios/zero, plataforma = selecionada, data = hoje).
+- Isso permite que free users enviem o print como comprovante e preencham os dados manualmente, salvando normalmente em `platform_entries`.
+
+### 4. Ajustes visuais na seção de revisão
+- Quando os dados vierem de preenchimento manual (free), não mostrar o badge de "Modo de simulação" nem o badge de confiança.
+- O badge de confiança e o aviso de simulação continuam aparecendo apenas quando `detected` foi gerado pela análise (premium).
+
+### 5. Permissões de salvamento
+- Tanto free quanto premium podem salvar registros importados/preenchidos manualmente.
+- Nenhuma restrição é adicionada ao `confirmarSalvar` ou à tabela `platform_entries`.
+
+## Arquivos modificados
+- `src/routes/importar-print.tsx` — único arquivo alterado.
+
+## Fora do escopo
+- Sem alterações no schema do banco.
+- Sem alterações em `subscriptions`, `platform_entries`, `premium.tsx` ou `use-subscription.ts`.
+- Não se altera o dashboard, histórico, ou outras telas.

@@ -17,10 +17,14 @@ import {
   ListChecks,
   RotateCcw,
   PartyPopper,
+  Crown,
+  Lock,
+  Hand,
 } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useSubscription } from "@/hooks/use-subscription";
 
 export const Route = createFileRoute("/importar-print")({
   head: () => ({
