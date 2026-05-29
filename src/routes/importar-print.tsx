@@ -1,8 +1,9 @@
 import { useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { ImageUp, Upload, AlertCircle, Loader2, X, Sparkles, Info } from "lucide-react";
+import { ImageUp, Upload, AlertCircle, Loader2, X, Sparkles, Info, CheckCircle2 } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/importar-print")({
   head: () => ({
@@ -19,8 +20,16 @@ export const Route = createFileRoute("/importar-print")({
 });
 
 const PLATAFORMAS = ["Uber", "99", "iFood", "Mercado Livre", "Rappi", "Outros"] as const;
-
 const ACCEPT = "image/png,image/jpeg,image/jpg";
+
+function sanitizeFilename(name: string) {
+  return name
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9._-]/g, "-")
+    .replace(/-+/g, "-")
+    .toLowerCase();
+}
 
 function ImportarPrintPage() {
   const [plataforma, setPlataforma] = useState<string>("Uber");
@@ -28,6 +37,7 @@ function ImportarPrintPage() {
   const [preview, setPreview] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [uploaded, setUploaded] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   function handleFile(f: File | null) {
@@ -38,6 +48,7 @@ function ImportarPrintPage() {
       return;
     }
     setFile(f);
+    setUploaded(false);
     const reader = new FileReader();
     reader.onload = (e) => setPreview((e.target?.result as string) ?? null);
     reader.readAsDataURL(f);
@@ -46,16 +57,57 @@ function ImportarPrintPage() {
   function clearFile() {
     setFile(null);
     setPreview(null);
+    setUploaded(false);
     if (inputRef.current) inputRef.current.value = "";
   }
 
-  function analisar() {
+  async function analisar() {
     if (!file) return;
     setLoading(true);
-    setTimeout(() => {
+    try {
+      const { data: userData, error: userErr } = await supabase.auth.getUser();
+      if (userErr || !userData.user) {
+        toast.error("Você precisa estar autenticado para enviar um print.");
+        return;
+      }
+      const userId = userData.user.id;
+      const path = `${userId}/${Date.now()}-${sanitizeFilename(file.name)}`;
+
+      const { error: upErr } = await supabase.storage
+        .from("imported-prints")
+        .upload(path, file, { contentType: file.type, upsert: false });
+      if (upErr) {
+        toast.error(`Falha no upload: ${upErr.message}`);
+        return;
+      }
+
+      const { data: signed, error: signErr } = await supabase.storage
+        .from("imported-prints")
+        .createSignedUrl(path, 60 * 60 * 24 * 365);
+      if (signErr) {
+        toast.error(`Falha ao gerar URL: ${signErr.message}`);
+        return;
+      }
+
+      const { error: insErr } = await supabase.from("imported_prints").insert({
+        user_id: userId,
+        platform_name: plataforma,
+        image_url: signed.signedUrl,
+        status: "pending_review",
+      });
+      if (insErr) {
+        toast.error(`Falha ao salvar registro: ${insErr.message}`);
+        return;
+      }
+
+      setUploaded(true);
+      toast.success("Print enviado com sucesso! Aguardando revisão.");
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Erro inesperado.";
+      toast.error(msg);
+    } finally {
       setLoading(false);
-      toast.info("A leitura inteligente de prints chegará em breve.");
-    }, 1200);
+    }
   }
 
   return (
@@ -164,6 +216,13 @@ function ImportarPrintPage() {
               </div>
             )}
 
+            {uploaded && (
+              <div className="flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-300">
+                <CheckCircle2 className="h-4 w-4" />
+                Enviado · aguardando revisão
+              </div>
+            )}
+
             <input
               ref={inputRef}
               type="file"
@@ -178,13 +237,13 @@ function ImportarPrintPage() {
             <button
               type="button"
               onClick={analisar}
-              disabled={!file || loading}
+              disabled={!file || loading || uploaded}
               className="bg-gradient-primary shadow-glow inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-primary-foreground transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
             >
               {loading ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Analisando...
+                  Enviando...
                 </>
               ) : (
                 <>
