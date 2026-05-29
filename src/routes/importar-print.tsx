@@ -20,12 +20,14 @@ import {
   Crown,
   Lock,
   Hand,
+  ShieldCheck,
 } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useSubscription } from "@/hooks/use-subscription";
 import { analyzePrintImage } from "@/lib/analyze-print";
+import { deleteImportedPrint } from "@/lib/imported-prints";
 
 export const Route = createFileRoute("/importar-print")({
   head: () => ({
