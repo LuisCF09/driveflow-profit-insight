@@ -683,7 +683,7 @@ function ImportarPrintPage() {
         <section className="glass rounded-2xl p-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="font-display text-lg font-semibold">Revisão dos dados</h2>
-            {detected && (
+            {detected && entrySource === "ai" && (
               <span
                 className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs ${
                   confidenceMeta(detected.confidence).cls
