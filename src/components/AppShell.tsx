@@ -1,6 +1,6 @@
 import { ReactNode, useEffect, useState } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, Car, Receipt, Target, FileBarChart, User, Crown, LogOut, Menu, X, Plus, CalendarDays, HelpCircle, ImageUp } from "lucide-react";
+import { LayoutDashboard, Car, Receipt, Target, FileBarChart, User, Crown, LogOut, Menu, X, Plus, CalendarDays, HelpCircle, ImageUp, History } from "lucide-react";
 import { DriveFlowLogo } from "@/components/DriveFlowLogo";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
