@@ -501,9 +501,9 @@ function ImportarPrintPage() {
             Importar print dos seus ganhos
           </h1>
           <p className="mx-auto mt-3 max-w-2xl text-sm text-muted-foreground sm:text-base">
-            Envie um print da tela de ganhos do seu aplicativo. O DriveFlow tentará
-            identificar as informações principais, mas você sempre poderá revisar e editar
-            antes de salvar.
+            Envie um print da tela de ganhos do seu aplicativo (Uber, 99, iFood, Mercado
+            Livre, Rappi e outras). A leitura inteligente tenta identificar os dados do
+            print, mas você sempre deve revisar antes de salvar.
           </p>
         </section>
 
