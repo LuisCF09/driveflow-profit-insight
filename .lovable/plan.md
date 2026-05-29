@@ -1,55 +1,23 @@
-# Plano: Página "Histórico Financeiro"
+No dashboard principal (src/routes/dashboard.tsx), adicionar o cálculo de lucro líquido estimado com base nos dados da tabela `platform_entries` do usuário logado.
 
-Criar uma nova rota `/historico` que lista os registros de `platform_entries` do usuário autenticado, com filtros, cards de resumo, edição inline e exclusão. RLS já restringe a `auth.uid() = user_id`, então não há mudanças de schema.
+1. Buscar registros da tabela `platform_entries` para o usuário autenticado (somente o que ele possui, via RLS).
 
-## Arquivos
+2. Calcular métricas:
+   - Ganho bruto total = soma de `gross_earnings`
+   - Custo de combustível total = soma de `fuel_cost` (null como 0)
+   - Custos extras total = soma de `extra_costs` (null como 0)
+   - Custos totais = combustível + extras
+   - Lucro líquido = ganho bruto − custos totais
+   - Margem de lucro = (lucro / ganho bruto) × 100. Se bruto = 0, margem = 0 para evitar divisão.
 
-### 1. Novo: `src/routes/historico.tsx`
-Rota `createFileRoute("/historico")` com `head()` próprio ("Histórico Financeiro — DriveFlow"). Componente client-side que faz fetch via `supabase.from("platform_entries").select(...).eq("user_id", user.id)`.
+3. Adicionar cards visuais no dashboard (junto aos cards existentes):
+   - Ganho bruto
+   - Custos totais
+   - Lucro líquido
+   - Margem de lucro (%)
 
-#### Estado e dados
-- `entries: PlatformEntry[]` carregados ao montar.
-- `loading`, `error`.
-- Filtros (todos client-side sobre o array carregado):
-  - `platformFilter: string` ("todas" | nome) — derivado dos valores distintos.
-  - `range: number` (7 / 15 / 30 / 90 / 180 / 365 / "todos") aplicado a `entry_date`.
-  - `sourceFilter: "todos" | "manual" | "imported_print"`.
+4. Incluir texto explicativo abaixo dos cards: "Esse é o valor estimado que sobrou depois dos custos informados."
 
-#### Cards de resumo (computados sobre a lista filtrada)
-- Total ganho (R$): soma `gross_earnings`.
-- Total de horas: soma `worked_hours`.
-- Total de km: soma `kilometers`.
-- Média por hora: `total_ganho / total_horas` (omite quando horas = 0).
-- Média por km: `total_ganho / total_km` (omite quando km = 0).
+5. Se não houver registros em `platform_entries`, manter o empty state atual do dashboard sem alterar sua mensagem.
 
-Grid responsivo de 5 cards (`grid-cols-2 md:grid-cols-5`).
-
-#### Tabela / Lista
-- Em telas `md+`: `<table>` com colunas Data, Plataforma, Ganho bruto, Horas, Corridas/entregas, Km, Origem, Observações, Ações.
-- Em telas pequenas: stack de cards com os mesmos campos rotulados.
-- Origem: pill "Manual" ou "Importado por print" (com cor/ícone distinto).
-- Estado vazio: mensagem "Nenhum registro encontrado para os filtros selecionados."
-
-#### Ações por linha
-- **Editar**: abre um modal/painel inline (dialog próprio do projeto ou seção expansível) com os mesmos campos editáveis usados na tela de importar (data, ganho bruto, horas, corridas, km, observações, plataforma). Salva via `update` em `platform_entries` (com `eq("id", row.id)`; RLS garante posse).
-- **Excluir**: confirmação simples (`window.confirm`) e depois `delete().eq("id", row.id)`. Atualiza a lista local.
-- Toasts de sucesso/erro via `sonner`.
-
-#### Segurança
-- Filtra pelo `user.id` retornado por `supabase.auth.getUser()`, embora RLS já garanta isso.
-- Redireciona para `/` se não autenticado (o `AppShell` já cobre, mas mantém checagem antes do fetch).
-
-### 2. Editar `src/components/AppShell.tsx`
-Adicionar item de navegação na constante `NAV`:
-```
-{ to: "/historico", label: "Histórico", icon: History },
-```
-Importar `History` de `lucide-react`. Posicionar entre "Relatórios" e "Como funciona".
-
-### 3. Editar `src/routes/importar-print.tsx`
-No card de sucesso, atualizar o botão "Ver histórico" para `to="/historico"` (hoje aponta para `/reports`).
-
-## Out of scope
-- Sem alterações no banco (RLS e tabela já atendem).
-- Sem paginação/infinite scroll — a tabela carrega todos os registros do usuário (limite padrão do Supabase = 1000 é suficiente nesta fase). Adicionar uma nota mental para paginar quando crescer.
-- Sem export CSV.
+Nenhuma alteração de schema ou tabela é necessária. Apenas leitura e cálculo no frontend.
