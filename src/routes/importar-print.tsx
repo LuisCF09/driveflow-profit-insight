@@ -238,6 +238,7 @@ function ImportarPrintPage() {
       }
 
       setImportedPrintId(inserted?.id ?? null);
+      setImportedImageUrl(signed.signedUrl);
       setUploaded(true);
       setDetected(detectedFromAI);
       setEntrySource("ai");
