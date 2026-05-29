@@ -135,6 +135,11 @@ function PlanosPage() {
             Saiba como funciona
           </Link>
         </div>
+
+        <div className="rounded-xl border border-border/60 bg-card/30 p-3 text-center text-xs text-muted-foreground">
+          O DriveFlow não é afiliado oficialmente às plataformas citadas. Os dados servem
+          apenas para organizar seu controle financeiro.
+        </div>
       </div>
 
       {/* Modal */}
