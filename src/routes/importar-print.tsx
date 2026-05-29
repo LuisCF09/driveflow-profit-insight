@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
   ImageUp,
   Upload,
@@ -10,6 +10,9 @@ import {
   Info,
   CheckCircle2,
   FlaskConical,
+  Pencil,
+  Check,
+  Ban,
 } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { toast } from "sonner";
@@ -70,6 +73,7 @@ function confidenceMeta(c: number) {
 }
 
 type DetectedData = {
+  platform: string;
   entryDate: string;
   grossEarnings: string;
   workedHours: string;
@@ -81,7 +85,27 @@ type DetectedData = {
   notes: string;
 };
 
+function parseNum(v: string): number | null {
+  if (v === "" || v == null) return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+}
+
+function formatBRL(v: string) {
+  const n = parseNum(v);
+  if (n == null) return "";
+  return n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+
+function formatDateBR(iso: string) {
+  if (!iso) return "";
+  const [y, m, d] = iso.split("-");
+  if (!y || !m || !d) return iso;
+  return `${d}/${m}/${y}`;
+}
+
 function ImportarPrintPage() {
+  const navigate = useNavigate();
   const [plataforma, setPlataforma] = useState<string>("Uber");
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
@@ -89,7 +113,11 @@ function ImportarPrintPage() {
   const [loading, setLoading] = useState(false);
   const [uploaded, setUploaded] = useState(false);
   const [detected, setDetected] = useState<DetectedData | null>(null);
+  const [snapshot, setSnapshot] = useState<DetectedData | null>(null);
+  const [mode, setMode] = useState<"view" | "edit">("view");
+  const [saving, setSaving] = useState(false);
   const [importedPrintId, setImportedPrintId] = useState<string | null>(null);
+  const [touched, setTouched] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   function handleFile(f: File | null) {
@@ -103,17 +131,22 @@ function ImportarPrintPage() {
     setUploaded(false);
     setDetected(null);
     setImportedPrintId(null);
+    setMode("view");
+    setTouched(false);
     const reader = new FileReader();
     reader.onload = (e) => setPreview((e.target?.result as string) ?? null);
     reader.readAsDataURL(f);
   }
 
-  function clearFile() {
+  function clearAll() {
     setFile(null);
     setPreview(null);
     setUploaded(false);
     setDetected(null);
+    setSnapshot(null);
     setImportedPrintId(null);
+    setMode("view");
+    setTouched(false);
     if (inputRef.current) inputRef.current.value = "";
   }
 
@@ -145,8 +178,8 @@ function ImportarPrintPage() {
         return;
       }
 
-      // Dados simulados
       const sim: DetectedData = {
+        platform: plataforma,
         entryDate: todayISO(),
         grossEarnings: "186.40",
         workedHours: "7.5",
@@ -162,7 +195,7 @@ function ImportarPrintPage() {
         .from("imported_prints")
         .insert({
           user_id: userId,
-          platform_name: plataforma,
+          platform_name: sim.platform,
           image_url: signed.signedUrl,
           status: "pending_review",
           entry_date: sim.entryDate,
@@ -185,6 +218,7 @@ function ImportarPrintPage() {
       setImportedPrintId(inserted?.id ?? null);
       setUploaded(true);
       setDetected(sim);
+      setMode("view");
       toast.success("Print analisado em modo de simulação. Revise os dados.");
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Erro inesperado.";
@@ -196,6 +230,119 @@ function ImportarPrintPage() {
 
   function updateField<K extends keyof DetectedData>(key: K, value: DetectedData[K]) {
     setDetected((prev) => (prev ? { ...prev, [key]: value } : prev));
+  }
+
+  function startEdit() {
+    if (!detected) return;
+    setSnapshot({ ...detected });
+    setMode("edit");
+  }
+
+  function saveEdit() {
+    setMode("view");
+    setTouched(true);
+  }
+
+  function cancelEdit() {
+    if (snapshot) setDetected({ ...snapshot });
+    setMode("view");
+  }
+
+  function getErrors(d: DetectedData | null) {
+    const errs: { platform?: string; entryDate?: string; grossEarnings?: string } = {};
+    if (!d) return errs;
+    if (!d.platform.trim()) errs.platform = "Informe a plataforma.";
+    if (!d.entryDate) errs.entryDate = "Informe a data.";
+    const gross = parseNum(d.grossEarnings);
+    if (gross == null || gross <= 0)
+      errs.grossEarnings = "Informe um ganho bruto maior que zero.";
+    return errs;
+  }
+
+  const errors = getErrors(detected);
+  const isValid = Object.keys(errors).length === 0;
+
+  async function confirmarSalvar() {
+    if (!detected || !importedPrintId) return;
+    if (!isValid) {
+      setTouched(true);
+      toast.error("Preencha plataforma, data e ganho bruto antes de salvar.");
+      return;
+    }
+    setSaving(true);
+    try {
+      const { data: userData, error: userErr } = await supabase.auth.getUser();
+      if (userErr || !userData.user) {
+        toast.error("Você precisa estar autenticado.");
+        return;
+      }
+      const userId = userData.user.id;
+
+      const payload = {
+        platform_name: detected.platform.trim(),
+        entry_date: detected.entryDate,
+        gross_earnings: parseNum(detected.grossEarnings) ?? 0,
+        worked_hours: parseNum(detected.workedHours),
+        trips_count: parseNum(detected.tripsCount),
+        kilometers: parseNum(detected.kilometers),
+        tips: parseNum(detected.tips),
+        fees: parseNum(detected.fees),
+        notes: detected.notes || null,
+        confidence: detected.confidence,
+      };
+
+      const { error: updErr } = await supabase
+        .from("imported_prints")
+        .update({ ...payload, status: "confirmed" })
+        .eq("id", importedPrintId);
+      if (updErr) {
+        toast.error(`Falha ao atualizar print: ${updErr.message}`);
+        return;
+      }
+
+      const { error: peErr } = await supabase.from("platform_entries").insert({
+        user_id: userId,
+        platform_name: payload.platform_name,
+        entry_date: payload.entry_date,
+        gross_earnings: payload.gross_earnings,
+        worked_hours: payload.worked_hours,
+        trips_count: payload.trips_count,
+        kilometers: payload.kilometers,
+        notes: payload.notes,
+        source: "imported_print",
+        imported_print_id: importedPrintId,
+      });
+      if (peErr) {
+        toast.error(`Falha ao salvar registro: ${peErr.message}`);
+        return;
+      }
+
+      toast.success("Registro salvo com sucesso!");
+      clearAll();
+      navigate({ to: "/" }).catch(() => {});
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Erro inesperado.";
+      toast.error(msg);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function cancelarImportacao() {
+    if (!importedPrintId) {
+      clearAll();
+      return;
+    }
+    try {
+      await supabase
+        .from("imported_prints")
+        .update({ status: "discarded" })
+        .eq("id", importedPrintId);
+    } catch {
+      /* não bloqueia o cancelamento na UI */
+    }
+    toast("Importação cancelada.");
+    clearAll();
   }
 
   return (
@@ -285,7 +432,7 @@ function ImportarPrintPage() {
                 />
                 <button
                   type="button"
-                  onClick={clearFile}
+                  onClick={clearAll}
                   className="absolute right-2 top-2 inline-flex h-8 w-8 items-center justify-center rounded-full bg-background/80 text-muted-foreground ring-1 ring-border/60 backdrop-blur hover:text-foreground"
                   aria-label="Remover imagem"
                 >
@@ -320,7 +467,7 @@ function ImportarPrintPage() {
             />
           </div>
 
-          {/* Botão */}
+          {/* Botão analisar */}
           <div className="mt-6 flex justify-end">
             <button
               type="button"
@@ -343,10 +490,10 @@ function ImportarPrintPage() {
           </div>
         </section>
 
-        {/* Resultado */}
+        {/* Revisão */}
         <section className="glass rounded-2xl p-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="font-display text-lg font-semibold">Dados detectados</h2>
+            <h2 className="font-display text-lg font-semibold">Revisão dos dados</h2>
             {detected && (
               <span
                 className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs ${
@@ -378,96 +525,212 @@ function ImportarPrintPage() {
                 <FlaskConical className="mt-0.5 h-4 w-4 shrink-0" />
                 <span>
                   <strong className="font-semibold">Modo de simulação:</strong> a leitura
-                  inteligente ainda não está ativa. Estes valores foram gerados como
-                  exemplo — revise antes de salvar.
+                  inteligente ainda não está ativa. Revise as informações abaixo — nada é
+                  salvo até você clicar em <em>Confirmar e salvar</em>.
                 </span>
               </div>
 
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <Field label="Plataforma">
-                  <input
-                    type="text"
-                    value={plataforma}
-                    onChange={(e) => setPlataforma(e.target.value)}
-                    className={inputCls}
+              {mode === "view" ? (
+                <div className="grid grid-cols-1 gap-x-4 gap-y-3 sm:grid-cols-2">
+                  <ViewField label="Plataforma" value={detected.platform} />
+                  <ViewField label="Data" value={formatDateBR(detected.entryDate)} />
+                  <ViewField
+                    label="Ganho bruto"
+                    value={formatBRL(detected.grossEarnings)}
                   />
-                </Field>
-                <Field label="Data">
-                  <input
-                    type="date"
-                    value={detected.entryDate}
-                    onChange={(e) => updateField("entryDate", e.target.value)}
-                    className={inputCls}
+                  <ViewField
+                    label="Horas trabalhadas"
+                    value={detected.workedHours ? `${detected.workedHours} h` : ""}
                   />
-                </Field>
-                <Field label="Ganho bruto (R$)">
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={detected.grossEarnings}
-                    onChange={(e) => updateField("grossEarnings", e.target.value)}
-                    className={inputCls}
-                  />
-                </Field>
-                <Field label="Horas trabalhadas">
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={detected.workedHours}
-                    onChange={(e) => updateField("workedHours", e.target.value)}
-                    className={inputCls}
-                  />
-                </Field>
-                <Field label="Corridas / entregas">
-                  <input
-                    type="number"
+                  <ViewField
+                    label="Corridas / entregas"
                     value={detected.tripsCount}
-                    onChange={(e) => updateField("tripsCount", e.target.value)}
-                    className={inputCls}
                   />
-                </Field>
-                <Field label="Km rodados">
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={detected.kilometers}
-                    onChange={(e) => updateField("kilometers", e.target.value)}
-                    className={inputCls}
+                  <ViewField
+                    label="Km rodados"
+                    value={detected.kilometers ? `${detected.kilometers} km` : ""}
                   />
-                </Field>
-                <Field label="Gorjetas (R$)">
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={detected.tips}
-                    onChange={(e) => updateField("tips", e.target.value)}
-                    className={inputCls}
+                  <ViewField label="Gorjetas" value={formatBRL(detected.tips)} />
+                  <ViewField
+                    label="Taxas / descontos"
+                    value={formatBRL(detected.fees)}
                   />
-                </Field>
-                <Field label="Taxas / descontos (R$)">
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={detected.fees}
-                    onChange={(e) => updateField("fees", e.target.value)}
-                    className={inputCls}
-                  />
-                </Field>
-                <div className="sm:col-span-2">
-                  <Field label="Observações">
-                    <textarea
-                      value={detected.notes}
-                      onChange={(e) => updateField("notes", e.target.value)}
-                      rows={3}
-                      className={`${inputCls} resize-y`}
-                    />
-                  </Field>
+                  <div className="sm:col-span-2">
+                    <ViewField label="Observações" value={detected.notes} multiline />
+                  </div>
                 </div>
+              ) : (
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <EditField
+                    label="Plataforma *"
+                    error={touched ? errors.platform : undefined}
+                  >
+                    <input
+                      type="text"
+                      value={detected.platform}
+                      onChange={(e) => updateField("platform", e.target.value)}
+                      className={inputCls(touched && !!errors.platform)}
+                    />
+                  </EditField>
+                  <EditField
+                    label="Data *"
+                    error={touched ? errors.entryDate : undefined}
+                  >
+                    <input
+                      type="date"
+                      value={detected.entryDate}
+                      onChange={(e) => updateField("entryDate", e.target.value)}
+                      className={inputCls(touched && !!errors.entryDate)}
+                    />
+                  </EditField>
+                  <EditField
+                    label="Ganho bruto (R$) *"
+                    error={touched ? errors.grossEarnings : undefined}
+                  >
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={detected.grossEarnings}
+                      onChange={(e) => updateField("grossEarnings", e.target.value)}
+                      className={inputCls(touched && !!errors.grossEarnings)}
+                    />
+                  </EditField>
+                  <EditField label="Horas trabalhadas">
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={detected.workedHours}
+                      onChange={(e) => updateField("workedHours", e.target.value)}
+                      className={inputCls(false)}
+                    />
+                  </EditField>
+                  <EditField label="Corridas / entregas">
+                    <input
+                      type="number"
+                      min="0"
+                      value={detected.tripsCount}
+                      onChange={(e) => updateField("tripsCount", e.target.value)}
+                      className={inputCls(false)}
+                    />
+                  </EditField>
+                  <EditField label="Km rodados">
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={detected.kilometers}
+                      onChange={(e) => updateField("kilometers", e.target.value)}
+                      className={inputCls(false)}
+                    />
+                  </EditField>
+                  <EditField label="Gorjetas (R$)">
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={detected.tips}
+                      onChange={(e) => updateField("tips", e.target.value)}
+                      className={inputCls(false)}
+                    />
+                  </EditField>
+                  <EditField label="Taxas / descontos (R$)">
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={detected.fees}
+                      onChange={(e) => updateField("fees", e.target.value)}
+                      className={inputCls(false)}
+                    />
+                  </EditField>
+                  <div className="sm:col-span-2">
+                    <EditField label="Observações">
+                      <textarea
+                        value={detected.notes}
+                        onChange={(e) => updateField("notes", e.target.value)}
+                        rows={3}
+                        className={`${inputCls(false)} resize-y`}
+                      />
+                    </EditField>
+                  </div>
+                </div>
+              )}
+
+              {/* Ações */}
+              <div className="flex flex-wrap items-center justify-end gap-2 border-t border-border/60 pt-4">
+                {mode === "view" ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={cancelarImportacao}
+                      disabled={saving}
+                      className="inline-flex items-center gap-2 rounded-xl border border-border/60 bg-card/40 px-4 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
+                    >
+                      <Ban className="h-4 w-4" />
+                      Cancelar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={startEdit}
+                      disabled={saving}
+                      className="inline-flex items-center gap-2 rounded-xl border border-border/60 bg-card/60 px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-card/80 disabled:opacity-50"
+                    >
+                      <Pencil className="h-4 w-4" />
+                      Editar dados
+                    </button>
+                    <button
+                      type="button"
+                      onClick={confirmarSalvar}
+                      disabled={saving || !isValid}
+                      title={
+                        !isValid
+                          ? "Preencha plataforma, data e ganho bruto."
+                          : undefined
+                      }
+                      className="bg-gradient-primary shadow-glow inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold text-primary-foreground transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {saving ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Salvando...
+                        </>
+                      ) : (
+                        <>
+                          <Check className="h-4 w-4" />
+                          Confirmar e salvar
+                        </>
+                      )}
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      onClick={cancelEdit}
+                      className="inline-flex items-center gap-2 rounded-xl border border-border/60 bg-card/40 px-4 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+                    >
+                      <X className="h-4 w-4" />
+                      Cancelar edição
+                    </button>
+                    <button
+                      type="button"
+                      onClick={saveEdit}
+                      className="bg-gradient-primary shadow-glow inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold text-primary-foreground"
+                    >
+                      <Check className="h-4 w-4" />
+                      Salvar alterações
+                    </button>
+                  </>
+                )}
               </div>
 
-              <p className="text-xs text-muted-foreground">
-                ID do print: <span className="font-mono">{importedPrintId ?? "—"}</span>
-              </p>
+              {touched && !isValid && mode === "view" && (
+                <p className="text-right text-xs text-rose-300">
+                  Preencha plataforma, data e ganho bruto para salvar.
+                </p>
+              )}
             </div>
           )}
         </section>
@@ -477,8 +740,8 @@ function ImportarPrintPage() {
           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-[var(--neon)]" />
           <div className="text-sm text-muted-foreground">
             <span className="font-medium text-foreground">Importante:</span> nenhuma
-            informação será salva automaticamente nos seus relatórios. Você poderá revisar
-            tudo antes de confirmar.
+            informação é salva automaticamente. Os dados só entram nos seus relatórios
+            depois que você clicar em <em>Confirmar e salvar</em>.
           </div>
         </section>
 
@@ -494,14 +757,54 @@ function ImportarPrintPage() {
   );
 }
 
-const inputCls =
-  "w-full rounded-xl border border-border/60 bg-card/40 px-3 py-2 text-sm text-foreground outline-none ring-0 transition-colors focus:border-primary/60 focus:bg-card/60";
+function inputCls(hasError: boolean) {
+  return `w-full rounded-xl border bg-card/40 px-3 py-2 text-sm text-foreground outline-none ring-0 transition-colors focus:bg-card/60 ${
+    hasError
+      ? "border-rose-500/60 focus:border-rose-500"
+      : "border-border/60 focus:border-primary/60"
+  }`;
+}
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function ViewField({
+  label,
+  value,
+  multiline = false,
+}: {
+  label: string;
+  value: string | null | undefined;
+  multiline?: boolean;
+}) {
+  const empty = !value || String(value).trim() === "";
+  return (
+    <div className="rounded-xl border border-border/40 bg-card/20 px-3 py-2">
+      <div className="text-[11px] uppercase tracking-wide text-muted-foreground">
+        {label}
+      </div>
+      <div
+        className={`mt-0.5 text-sm ${
+          empty ? "italic text-muted-foreground/70" : "text-foreground"
+        } ${multiline ? "whitespace-pre-wrap" : "truncate"}`}
+      >
+        {empty ? "Não identificado" : value}
+      </div>
+    </div>
+  );
+}
+
+function EditField({
+  label,
+  error,
+  children,
+}: {
+  label: string;
+  error?: string;
+  children: React.ReactNode;
+}) {
   return (
     <label className="block space-y-1.5">
       <span className="text-xs font-medium text-muted-foreground">{label}</span>
       {children}
+      {error && <span className="block text-xs text-rose-300">{error}</span>}
     </label>
   );
 }

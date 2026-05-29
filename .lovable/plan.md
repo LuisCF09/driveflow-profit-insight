@@ -1,68 +1,47 @@
-# Plano: Simulação de Leitura Inteligente de Prints
+# Plano: Área de Revisão com Confirmar/Editar/Cancelar
 
 ## Resumo
-Implementar uma simulação de "leitura inteligente" na tela "Importar Print". Quando o usuário enviar uma imagem e clicar em "Analisar print", o sistema gerará dados simulados para preencher os campos de revisão. Os dados serão editáveis antes de salvar. A interface deixará claro que está em modo de simulação.
+Reformular a seção "Dados detectados" da tela `src/routes/importar-print.tsx` para ter dois modos (visualização e edição), validação simples antes de confirmar, e ação explícita de salvar.
 
-## Alterações no Frontend (src/routes/importar-print.tsx)
+## Alterações em `src/routes/importar-print.tsx`
 
-### 1. Estados de Dados Detectados
-Adicionar estados controlados para os campos de revisão:
-- entryDate (Date)
-- grossEarnings (number)
-- workedHours (number)
-- tripsCount (number)
-- kilometers (number)
-- tips (number)
-- fees (number)
-- confidence (number)
-- notes (text)
-- analysisReady (boolean) — controla exibição da seção de revisão
+### 1. Novo estado
+- `mode: "view" | "edit"` — controla se os campos são apenas leitura ou editáveis. Inicia em `"view"` quando a análise termina.
+- `saving: boolean` — estado do botão "Confirmar e salvar".
+- Snapshot dos dados antes de editar (para suportar "Cancelar" voltando aos valores anteriores).
 
-### 2. Função de Simulação (analisar)
-Manter o fluxo de upload da imagem ao Storage e inserção em imported_prints.
-Após o upload bem-sucedido, gerar dados simulados fixos conforme especificado:
-- plataforma = plataforma selecionada pelo usuário
-- data = data atual
-- ganho bruto = 186.40
-- horas trabalhadas = 7.5
-- corridas/entregas = 18
-- km rodados = 94.2
-- gorjetas = 12.00
-- taxas/descontos = 0
-- confiança = 0.87
-- observações = "Dados gerados em modo de simulação."
+### 2. Modo visualização
+- Lista os campos em grid (label + valor).
+- Campos vazios renderizam o texto `Não identificado` em estilo `text-muted-foreground italic`.
+- Mantém o badge de confiança (Alta/Média/Baixa) já existente.
+- Botões: **Editar dados**, **Confirmar e salvar**, **Cancelar**.
 
-Atualizar o registro em imported_prints com os dados simulados (preenchendo os campos correspondentes).
+### 3. Modo edição
+- Mesmo grid de inputs já presente (Plataforma, Data, Ganho bruto, Horas, Corridas/entregas, Km, Gorjetas, Taxas, Observações).
+- Botões: **Salvar alterações** (volta para `view`), **Cancelar edição** (restaura snapshot e volta para `view`).
 
-### 3. Seção de Revisão — Interface
-Substituir a seção "Dados detectados" (estática) por uma área condicional que aparece quando analysisReady === true.
+### 4. Validação ao confirmar
+- Função `validate()` exige: `platform_name`, `entry_date`, `gross_earnings > 0` (numérico válido).
+- Se faltar, exibir mensagem inline por campo e `toast.error("Preencha plataforma, data e ganho bruto antes de salvar.")`.
+- Botão "Confirmar e salvar" fica `disabled` enquanto validação falha; explica o motivo via `title`.
 
-Layout da revisão:
-- Badge/alerta no topo: "Modo de simulação — leitura inteligente em desenvolvimento"
-- Indicador de confiança com cor e label:
-  - >= 0.80 → verde · "Alta confiança"
-  - 0.50–0.79 → amarelo/laranja · "Média confiança"
-  - < 0.50 → vermelho · "Baixa confiança"
-- Campos editáveis em grid de 2 colunas (sm:):
-  - Data (date input)
-  - Ganho bruto (number, step 0.01)
-  - Horas trabalhadas (number, step 0.01)
-  - Corridas / entregas (number)
-  - Km rodados (number, step 0.01)
-  - Gorjetas (number, step 0.01)
-  - Taxas / descontos (number, step 0.01)
-- Campo de observações (textarea, full width)
-- Botões de ação:
-  - "Salvar registro" — insere em platform_entries e atualiza imported_prints.status para "confirmed"
-  - "Descartar" — limpa a análise e mantém apenas a imagem em pending_review
+### 5. Ação "Confirmar e salvar"
+- Atualiza o registro `imported_prints` com os valores revisados e `status = "confirmed"`.
+- Insere uma linha em `platform_entries` (source = `"imported_print"`, `imported_print_id` = id atual) com os campos editados.
+- Toast de sucesso, limpa o formulário (`clearFile` + reset de estados).
 
-### 4. Estados e Feedback
-- Durante análise: spinner "Analisando print..." no botão
-- Após análise: preview da imagem continua visível, seção de revisão renderiza
-- Sucesso ao salvar: toast de confirmação, limpa o formulário
+### 6. Ação "Cancelar" (no modo view)
+- Atualiza `imported_prints.status = "discarded"`.
+- Limpa formulário e dados detectados; mantém o usuário na tela.
+- Toast informativo "Importação cancelada".
 
-## Out of Scope (conforme instrução do usuário)
-- Não salvar em platform_entries até revisão e confirmação do usuário.
+### 7. Mensagens e UX
+- Badge de "Modo de simulação" permanece.
+- Pequeno texto: "Revise as informações abaixo. Nada é salvo até você clicar em Confirmar e salvar."
+- Validação inline simples (borda vermelha + texto curto).
 
-## Arquivos Alterados
-- src/routes/importar-print.tsx (único arquivo alterado)
+## Out of scope
+- Sem alterações em outras telas, schema ou políticas RLS.
+
+## Arquivos alterados
+- `src/routes/importar-print.tsx` (único arquivo)
