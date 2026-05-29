@@ -20,7 +20,7 @@ const CARDS = [
   {
     icon: TrendingUp,
     title: "Registre seus ganhos",
-    text: "Adicione quanto você ganhou em plataformas como Uber, 99, iFood, Mercado Livre, Rappi ou outras.",
+    text: "Registre seus ganhos de plataformas como Uber, 99, iFood, Mercado Livre, Rappi e outras.",
   },
   {
     icon: Receipt,
@@ -30,12 +30,12 @@ const CARDS = [
   {
     icon: ImageUp,
     title: "Importe prints e comprovantes",
-    text: "Envie prints dos seus aplicativos para facilitar o preenchimento dos dados financeiros.",
+    text: "Importe prints dos seus aplicativos para facilitar o preenchimento dos dados financeiros.",
   },
   {
     icon: BarChart3,
-    title: "Veja seu lucro real",
-    text: "O DriveFlow calcula lucro líquido, ganho por hora, custo por km e desempenho por período.",
+    title: "Veja seu lucro estimado",
+    text: "Com base nos dados que você registra, o DriveFlow calcula lucro líquido estimado, ganho por hora, custo por km e desempenho por período.",
   },
 ];
 
