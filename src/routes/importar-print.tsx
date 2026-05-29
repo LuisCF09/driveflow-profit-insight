@@ -672,6 +672,17 @@ function ImportarPrintPage() {
             />
           </div>
 
+          {/* Aviso pré-upload */}
+          {file && !uploaded && (
+            <div className="mt-4 flex items-start gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-300" />
+              <span>
+                Antes de enviar, confira se o print não contém dados pessoais que você
+                não deseja armazenar.
+              </span>
+            </div>
+          )}
+
           {/* Botões de ação */}
           <div className="mt-6 flex flex-col-reverse items-stretch gap-2 sm:flex-row sm:items-center sm:justify-end">
             <button
