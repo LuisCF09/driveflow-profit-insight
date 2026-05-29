@@ -20,12 +20,14 @@ import {
   Crown,
   Lock,
   Hand,
+  ShieldCheck,
 } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useSubscription } from "@/hooks/use-subscription";
 import { analyzePrintImage } from "@/lib/analyze-print";
+import { deleteImportedPrint } from "@/lib/imported-prints";
 
 export const Route = createFileRoute("/importar-print")({
   head: () => ({
@@ -128,6 +130,7 @@ function ImportarPrintPage() {
   const [entrySource, setEntrySource] = useState<"ai" | "manual">("ai");
   const [saving, setSaving] = useState(false);
   const [importedPrintId, setImportedPrintId] = useState<string | null>(null);
+  const [importedImageUrl, setImportedImageUrl] = useState<string | null>(null);
   const [touched, setTouched] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -142,6 +145,7 @@ function ImportarPrintPage() {
     setUploaded(false);
     setDetected(null);
     setImportedPrintId(null);
+    setImportedImageUrl(null);
     setMode("view");
     setTouched(false);
     const reader = new FileReader();
@@ -156,6 +160,7 @@ function ImportarPrintPage() {
     setDetected(null);
     setSnapshot(null);
     setImportedPrintId(null);
+    setImportedImageUrl(null);
     setMode("view");
     setTouched(false);
     if (inputRef.current) inputRef.current.value = "";
@@ -233,6 +238,7 @@ function ImportarPrintPage() {
       }
 
       setImportedPrintId(inserted?.id ?? null);
+      setImportedImageUrl(signed.signedUrl);
       setUploaded(true);
       setDetected(detectedFromAI);
       setEntrySource("ai");
@@ -305,6 +311,7 @@ function ImportarPrintPage() {
       }
 
       setImportedPrintId(inserted?.id ?? null);
+      setImportedImageUrl(signed.signedUrl);
       setUploaded(true);
       setDetected(empty);
       setEntrySource("manual");
@@ -439,12 +446,11 @@ function ImportarPrintPage() {
       return;
     }
     try {
-      await supabase
-        .from("imported_prints")
-        .update({ status: "discarded" })
-        .eq("id", importedPrintId);
-    } catch {
-      /* não bloqueia o cancelamento na UI */
+      await deleteImportedPrint(importedPrintId, importedImageUrl);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Erro inesperado.";
+      toast.error(`Falha ao cancelar: ${msg}`);
+      return;
     }
     toast("Importação cancelada.");
     clearAll();
@@ -538,6 +544,29 @@ function ImportarPrintPage() {
             </Link>
           </section>
         )}
+
+        {/* Privacidade e cuidados com o print */}
+        <section className="glass rounded-2xl p-4 sm:p-5">
+          <div className="flex items-start gap-3">
+            <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/15 ring-1 ring-primary/30">
+              <ShieldCheck className="h-4 w-4 text-[var(--neon)]" />
+            </div>
+            <div className="text-sm">
+              <div className="font-display font-semibold text-foreground">
+                Privacidade e cuidados com o print
+              </div>
+              <p className="mt-1 text-muted-foreground">
+                Use prints que mostrem apenas informações necessárias para o controle
+                financeiro. Evite enviar imagens com dados sensíveis, documentos,
+                endereço, CPF ou informações pessoais desnecessárias.
+              </p>
+              <p className="mt-2 text-xs text-muted-foreground">
+                Os dados são usados apenas para organizar seu controle financeiro. O
+                DriveFlow não é afiliado oficialmente às plataformas citadas.
+              </p>
+            </div>
+          </div>
+        </section>
 
         {/* Formulário */}
         <section className="glass rounded-2xl p-5 sm:p-6">
@@ -642,6 +671,17 @@ function ImportarPrintPage() {
               onChange={(e) => handleFile(e.target.files?.[0] ?? null)}
             />
           </div>
+
+          {/* Aviso pré-upload */}
+          {file && !uploaded && (
+            <div className="mt-4 flex items-start gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-300" />
+              <span>
+                Antes de enviar, confira se o print não contém dados pessoais que você
+                não deseja armazenar.
+              </span>
+            </div>
+          )}
 
           {/* Botões de ação */}
           <div className="mt-6 flex flex-col-reverse items-stretch gap-2 sm:flex-row sm:items-center sm:justify-end">

@@ -15,6 +15,17 @@ import {
 import { AppShell } from "@/components/AppShell";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { deleteImportedPrint } from "@/lib/imported-prints";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/historico")({
   head: () => ({
@@ -76,6 +87,7 @@ function HistoricoPage() {
   const [editing, setEditing] = useState<Entry | null>(null);
   const [savingEdit, setSavingEdit] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<Entry | null>(null);
 
   async function load() {
     setLoading(true);
@@ -145,19 +157,37 @@ function HistoricoPage() {
     };
   }, [filtered]);
 
-  async function handleDelete(id: string) {
-    if (!window.confirm("Excluir este registro? Esta ação não pode ser desfeita.")) return;
-    setDeletingId(id);
+  async function handleDelete(entry: Entry) {
+    setDeletingId(entry.id);
     try {
-      const { error } = await supabase.from("platform_entries").delete().eq("id", id);
+      const { error } = await supabase.from("platform_entries").delete().eq("id", entry.id);
       if (error) {
         toast.error(`Falha ao excluir: ${error.message}`);
         return;
       }
-      setEntries((prev) => prev.filter((e) => e.id !== id));
+      setEntries((prev) => prev.filter((e) => e.id !== entry.id));
+
+      // Se o registro veio de um print importado, remove também o print
+      // original e a imagem do storage (escopo do usuário garantido por RLS).
+      if (entry.imported_print_id) {
+        try {
+          const { data: ip } = await supabase
+            .from("imported_prints")
+            .select("image_url")
+            .eq("id", entry.imported_print_id)
+            .maybeSingle();
+          await deleteImportedPrint(entry.imported_print_id, ip?.image_url ?? null);
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : "erro desconhecido";
+          toast.warning(`Registro excluído, mas o print original não foi removido: ${msg}`);
+          return;
+        }
+      }
+
       toast.success("Registro excluído.");
     } finally {
       setDeletingId(null);
+      setConfirmDelete(null);
     }
   }
 
@@ -354,7 +384,7 @@ function HistoricoPage() {
                             </button>
                             <button
                               type="button"
-                              onClick={() => handleDelete(e.id)}
+                              onClick={() => setConfirmDelete(e)}
                               disabled={deletingId === e.id}
                               title="Excluir"
                               className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-rose-500/30 bg-rose-500/10 text-rose-300 transition-colors hover:bg-rose-500/20 disabled:opacity-50"
@@ -409,7 +439,7 @@ function HistoricoPage() {
                       </button>
                       <button
                         type="button"
-                        onClick={() => handleDelete(e.id)}
+                        onClick={() => setConfirmDelete(e)}
                         disabled={deletingId === e.id}
                         className="inline-flex items-center gap-1.5 rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-1.5 text-xs text-rose-300 disabled:opacity-50"
                       >
@@ -574,6 +604,44 @@ function HistoricoPage() {
           </div>
         </div>
       )}
+
+      {/* Confirmação de exclusão */}
+      <AlertDialog
+        open={confirmDelete !== null}
+        onOpenChange={(open) => {
+          if (!open && deletingId === null) setConfirmDelete(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir registro?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmDelete?.imported_print_id
+                ? "Este registro será removido do seu histórico financeiro. O print importado e a imagem original também serão apagados. Esta ação não pode ser desfeita."
+                : "Este registro será removido do seu histórico financeiro. Esta ação não pode ser desfeita."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deletingId !== null}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                if (confirmDelete) handleDelete(confirmDelete);
+              }}
+              disabled={deletingId !== null}
+              className="bg-rose-500/90 text-white hover:bg-rose-500"
+            >
+              {deletingId !== null ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" /> Excluindo...
+                </>
+              ) : (
+                "Excluir"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AppShell>
   );
 }
