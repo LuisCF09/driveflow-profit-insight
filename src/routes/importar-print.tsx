@@ -545,6 +545,29 @@ function ImportarPrintPage() {
           </section>
         )}
 
+        {/* Privacidade e cuidados com o print */}
+        <section className="glass rounded-2xl p-4 sm:p-5">
+          <div className="flex items-start gap-3">
+            <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/15 ring-1 ring-primary/30">
+              <ShieldCheck className="h-4 w-4 text-[var(--neon)]" />
+            </div>
+            <div className="text-sm">
+              <div className="font-display font-semibold text-foreground">
+                Privacidade e cuidados com o print
+              </div>
+              <p className="mt-1 text-muted-foreground">
+                Use prints que mostrem apenas informações necessárias para o controle
+                financeiro. Evite enviar imagens com dados sensíveis, documentos,
+                endereço, CPF ou informações pessoais desnecessárias.
+              </p>
+              <p className="mt-2 text-xs text-muted-foreground">
+                Os dados são usados apenas para organizar seu controle financeiro. O
+                DriveFlow não é afiliado oficialmente às plataformas citadas.
+              </p>
+            </div>
+          </div>
+        </section>
+
         {/* Formulário */}
         <section className="glass rounded-2xl p-5 sm:p-6">
           {/* Plataforma */}
