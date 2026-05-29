@@ -384,7 +384,7 @@ function HistoricoPage() {
                             </button>
                             <button
                               type="button"
-                              onClick={() => handleDelete(e.id)}
+                              onClick={() => setConfirmDelete(e)}
                               disabled={deletingId === e.id}
                               title="Excluir"
                               className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-rose-500/30 bg-rose-500/10 text-rose-300 transition-colors hover:bg-rose-500/20 disabled:opacity-50"
@@ -439,7 +439,7 @@ function HistoricoPage() {
                       </button>
                       <button
                         type="button"
-                        onClick={() => handleDelete(e.id)}
+                        onClick={() => setConfirmDelete(e)}
                         disabled={deletingId === e.id}
                         className="inline-flex items-center gap-1.5 rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-1.5 text-xs text-rose-300 disabled:opacity-50"
                       >
