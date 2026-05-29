@@ -12,7 +12,12 @@ export function AuthCard() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
+  const [formError, setFormError] = useState<string | null>(null);
   const navigate = useNavigate();
+
+  function clearError() {
+    if (formError) setFormError(null);
+  }
 
   function translateError(message: string) {
     const m = message.toLowerCase();
