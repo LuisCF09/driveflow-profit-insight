@@ -26,11 +26,16 @@ function DashboardPage() {
 
   useEffect(() => {
     (async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { navigate({ to: "/" }); return; }
-      const { data: v } = await supabase.from("vehicles").select("id").limit(1);
-      if (!v || v.length === 0) { navigate({ to: "/onboarding" }); return; }
-      setChecked(true);
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) { navigate({ to: "/" }); return; }
+        const { data: v } = await supabase.from("vehicles").select("id").limit(1);
+        if (!v || v.length === 0) { navigate({ to: "/onboarding" }); return; }
+        setChecked(true);
+      } catch (err) {
+        console.error("[dashboard] init failed", err);
+        setChecked(true);
+      }
     })();
   }, [navigate]);
 
