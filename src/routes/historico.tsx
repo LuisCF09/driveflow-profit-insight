@@ -209,7 +209,7 @@ function HistoricoPage() {
                 Histórico Financeiro
               </h1>
               <p className="text-sm text-muted-foreground">
-                Todos os seus registros, importados ou inseridos manualmente.
+                Todos os seus registros de ganhos por aplicativo, importados ou inseridos manualmente, organizados em um só lugar.
               </p>
             </div>
           </div>
