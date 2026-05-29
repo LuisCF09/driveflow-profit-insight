@@ -12,13 +12,19 @@ export function AuthCard() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
+  const [formError, setFormError] = useState<string | null>(null);
   const navigate = useNavigate();
+
+  function clearError() {
+    if (formError) setFormError(null);
+  }
 
   function translateError(message: string) {
     const m = message.toLowerCase();
     if (m.includes("invalid login")) return "Email ou senha incorretos.";
     if (m.includes("already registered") || m.includes("user already")) return "Este email já está cadastrado. Faça login.";
-    if (m.includes("pwned") || m.includes("leaked") || m.includes("compromised") || m.includes("weak password")) return "Esta senha é muito comum ou foi vazada em outros sites. Escolha uma senha mais forte (combine letras, números e símbolos).";
+    if (m.includes("pwned") || m.includes("leaked") || m.includes("compromised")) return "Esta senha já apareceu em vazamentos públicos e foi bloqueada por segurança. Use uma combinação única (ex.: 3 palavras aleatórias + número + símbolo).";
+    if (m.includes("weak password")) return "Senha muito fraca. Combine letras maiúsculas, minúsculas, números e símbolos.";
     if (m.includes("at least") && m.includes("character")) return "A senha deve ter pelo menos 6 caracteres.";
     if (m.includes("password should") || m.includes("password must")) return "Senha não atende aos requisitos. Tente uma combinação mais forte.";
     if (m.includes("password")) return message;
@@ -29,6 +35,7 @@ export function AuthCard() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (loading) return;
+    setFormError(null);
     setLoading(true);
     try {
       if (mode === "signup") {
@@ -59,8 +66,11 @@ export function AuthCard() {
         setMode("login");
       }
     } catch (err) {
+      console.error("[auth]", mode, err);
       const msg = err instanceof Error ? err.message : "Algo deu errado.";
-      toast.error(translateError(msg));
+      const translated = translateError(msg);
+      setFormError(translated);
+      toast.error(translated);
     } finally {
       setLoading(false);
     }
@@ -94,12 +104,12 @@ export function AuthCard() {
 
       <form className="space-y-3" onSubmit={handleSubmit}>
         {mode === "signup" && (
-          <Field label="Nome" type="text" placeholder="Seu nome" value={name} onChange={(e) => setName(e.target.value)} required />
+          <Field label="Nome" type="text" placeholder="Seu nome" value={name} onChange={(e) => { setName(e.target.value); clearError(); }} required />
         )}
-        <Field label="Email" type="email" placeholder="voce@email.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
+        <Field label="Email" type="email" placeholder="voce@email.com" value={email} onChange={(e) => { setEmail(e.target.value); clearError(); }} required />
         {mode !== "recover" && (
           <div>
-            <Field label="Senha" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
+            <Field label="Senha" type="password" placeholder="••••••••" value={password} onChange={(e) => { setPassword(e.target.value); clearError(); }} required minLength={6} />
             {mode === "signup" && password.length > 0 && (
               <div className="mt-1.5 space-y-1">
                 <div className="h-1 w-full overflow-hidden rounded-full bg-secondary/60">
@@ -111,7 +121,9 @@ export function AuthCard() {
                   />
                 </div>
                 <p className={`text-[11px] ${password.length < 6 ? "text-red-400" : "text-muted-foreground"}`}>
-                  {password.length < 6 ? `A senha deve ter pelo menos 6 caracteres (${password.length}/6)` : "Senha válida"}
+                  {password.length < 6
+                    ? `A senha deve ter pelo menos 6 caracteres (${password.length}/6)`
+                    : "Evite senhas comuns ou já usadas em outros sites — o cadastro rejeita senhas que vazaram publicamente."}
                 </p>
               </div>
             )}
@@ -119,7 +131,7 @@ export function AuthCard() {
         )}
         {mode === "signup" && (
           <div>
-            <Field label="Confirmar senha" type="password" placeholder="••••••••" value={confirm} onChange={(e) => setConfirm(e.target.value)} required minLength={6} />
+            <Field label="Confirmar senha" type="password" placeholder="••••••••" value={confirm} onChange={(e) => { setConfirm(e.target.value); clearError(); }} required minLength={6} />
             {confirm.length > 0 && confirm !== password && (
               <p className="mt-1 text-[11px] text-red-400">As senhas não coincidem</p>
             )}
@@ -135,6 +147,15 @@ export function AuthCard() {
             >
               Esqueci minha senha
             </button>
+          </div>
+        )}
+
+        {formError && (
+          <div
+            role="alert"
+            className="rounded-xl border border-red-500/40 bg-red-500/10 px-3.5 py-2.5 text-[12px] leading-snug text-red-300"
+          >
+            {formError}
           </div>
         )}
 
