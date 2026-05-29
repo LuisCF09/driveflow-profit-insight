@@ -104,12 +104,12 @@ export function AuthCard() {
 
       <form className="space-y-3" onSubmit={handleSubmit}>
         {mode === "signup" && (
-          <Field label="Nome" type="text" placeholder="Seu nome" value={name} onChange={(e) => setName(e.target.value)} required />
+          <Field label="Nome" type="text" placeholder="Seu nome" value={name} onChange={(e) => { setName(e.target.value); clearError(); }} required />
         )}
-        <Field label="Email" type="email" placeholder="voce@email.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
+        <Field label="Email" type="email" placeholder="voce@email.com" value={email} onChange={(e) => { setEmail(e.target.value); clearError(); }} required />
         {mode !== "recover" && (
           <div>
-            <Field label="Senha" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
+            <Field label="Senha" type="password" placeholder="••••••••" value={password} onChange={(e) => { setPassword(e.target.value); clearError(); }} required minLength={6} />
             {mode === "signup" && password.length > 0 && (
               <div className="mt-1.5 space-y-1">
                 <div className="h-1 w-full overflow-hidden rounded-full bg-secondary/60">
@@ -121,7 +121,9 @@ export function AuthCard() {
                   />
                 </div>
                 <p className={`text-[11px] ${password.length < 6 ? "text-red-400" : "text-muted-foreground"}`}>
-                  {password.length < 6 ? `A senha deve ter pelo menos 6 caracteres (${password.length}/6)` : "Senha válida"}
+                  {password.length < 6
+                    ? `A senha deve ter pelo menos 6 caracteres (${password.length}/6)`
+                    : "Evite senhas comuns ou já usadas em outros sites — o cadastro rejeita senhas que vazaram publicamente."}
                 </p>
               </div>
             )}
@@ -129,7 +131,7 @@ export function AuthCard() {
         )}
         {mode === "signup" && (
           <div>
-            <Field label="Confirmar senha" type="password" placeholder="••••••••" value={confirm} onChange={(e) => setConfirm(e.target.value)} required minLength={6} />
+            <Field label="Confirmar senha" type="password" placeholder="••••••••" value={confirm} onChange={(e) => { setConfirm(e.target.value); clearError(); }} required minLength={6} />
             {confirm.length > 0 && confirm !== password && (
               <p className="mt-1 text-[11px] text-red-400">As senhas não coincidem</p>
             )}
