@@ -14,6 +14,7 @@ import { Route as ReportsRouteImport } from './routes/reports'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as PremiumRouteImport } from './routes/premium'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
+import { Route as ImportarPrintRouteImport } from './routes/importar-print'
 import { Route as GoalsRouteImport } from './routes/goals'
 import { Route as ExpensesRouteImport } from './routes/expenses'
 import { Route as DashboardRouteImport } from './routes/dashboard'
@@ -44,6 +45,11 @@ const PremiumRoute = PremiumRouteImport.update({
 const OnboardingRoute = OnboardingRouteImport.update({
   id: '/onboarding',
   path: '/onboarding',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ImportarPrintRoute = ImportarPrintRouteImport.update({
+  id: '/importar-print',
+  path: '/importar-print',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GoalsRoute = GoalsRouteImport.update({
@@ -84,6 +90,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRoute
   '/expenses': typeof ExpensesRoute
   '/goals': typeof GoalsRoute
+  '/importar-print': typeof ImportarPrintRoute
   '/onboarding': typeof OnboardingRoute
   '/premium': typeof PremiumRoute
   '/profile': typeof ProfileRoute
@@ -97,6 +104,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardRoute
   '/expenses': typeof ExpensesRoute
   '/goals': typeof GoalsRoute
+  '/importar-print': typeof ImportarPrintRoute
   '/onboarding': typeof OnboardingRoute
   '/premium': typeof PremiumRoute
   '/profile': typeof ProfileRoute
@@ -111,6 +119,7 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRoute
   '/expenses': typeof ExpensesRoute
   '/goals': typeof GoalsRoute
+  '/importar-print': typeof ImportarPrintRoute
   '/onboarding': typeof OnboardingRoute
   '/premium': typeof PremiumRoute
   '/profile': typeof ProfileRoute
@@ -126,6 +135,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/expenses'
     | '/goals'
+    | '/importar-print'
     | '/onboarding'
     | '/premium'
     | '/profile'
@@ -139,6 +149,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/expenses'
     | '/goals'
+    | '/importar-print'
     | '/onboarding'
     | '/premium'
     | '/profile'
@@ -152,6 +163,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/expenses'
     | '/goals'
+    | '/importar-print'
     | '/onboarding'
     | '/premium'
     | '/profile'
@@ -166,6 +178,7 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRoute
   ExpensesRoute: typeof ExpensesRoute
   GoalsRoute: typeof GoalsRoute
+  ImportarPrintRoute: typeof ImportarPrintRoute
   OnboardingRoute: typeof OnboardingRoute
   PremiumRoute: typeof PremiumRoute
   ProfileRoute: typeof ProfileRoute
@@ -208,6 +221,13 @@ declare module '@tanstack/react-router' {
       path: '/onboarding'
       fullPath: '/onboarding'
       preLoaderRoute: typeof OnboardingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/importar-print': {
+      id: '/importar-print'
+      path: '/importar-print'
+      fullPath: '/importar-print'
+      preLoaderRoute: typeof ImportarPrintRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/goals': {
@@ -262,6 +282,7 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRoute,
   ExpensesRoute: ExpensesRoute,
   GoalsRoute: GoalsRoute,
+  ImportarPrintRoute: ImportarPrintRoute,
   OnboardingRoute: OnboardingRoute,
   PremiumRoute: PremiumRoute,
   ProfileRoute: ProfileRoute,
@@ -271,3 +292,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
