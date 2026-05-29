@@ -25,6 +25,7 @@ import { AppShell } from "@/components/AppShell";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useSubscription } from "@/hooks/use-subscription";
+import { analyzePrintImage } from "@/lib/analyze-print";
 
 export const Route = createFileRoute("/importar-print")({
   head: () => ({
