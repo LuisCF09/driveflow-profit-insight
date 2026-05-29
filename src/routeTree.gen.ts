@@ -18,6 +18,7 @@ import { Route as GoalsRouteImport } from './routes/goals'
 import { Route as ExpensesRouteImport } from './routes/expenses'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as DailyReportRouteImport } from './routes/daily-report'
+import { Route as ComoFuncionaRouteImport } from './routes/como-funciona'
 import { Route as IndexRouteImport } from './routes/index'
 
 const RidesRoute = RidesRouteImport.update({
@@ -65,6 +66,11 @@ const DailyReportRoute = DailyReportRouteImport.update({
   path: '/daily-report',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ComoFuncionaRoute = ComoFuncionaRouteImport.update({
+  id: '/como-funciona',
+  path: '/como-funciona',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -73,6 +79,7 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/como-funciona': typeof ComoFuncionaRoute
   '/daily-report': typeof DailyReportRoute
   '/dashboard': typeof DashboardRoute
   '/expenses': typeof ExpensesRoute
@@ -85,6 +92,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/como-funciona': typeof ComoFuncionaRoute
   '/daily-report': typeof DailyReportRoute
   '/dashboard': typeof DashboardRoute
   '/expenses': typeof ExpensesRoute
@@ -98,6 +106,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/como-funciona': typeof ComoFuncionaRoute
   '/daily-report': typeof DailyReportRoute
   '/dashboard': typeof DashboardRoute
   '/expenses': typeof ExpensesRoute
@@ -112,6 +121,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/como-funciona'
     | '/daily-report'
     | '/dashboard'
     | '/expenses'
@@ -124,6 +134,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/como-funciona'
     | '/daily-report'
     | '/dashboard'
     | '/expenses'
@@ -136,6 +147,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/como-funciona'
     | '/daily-report'
     | '/dashboard'
     | '/expenses'
@@ -149,6 +161,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ComoFuncionaRoute: typeof ComoFuncionaRoute
   DailyReportRoute: typeof DailyReportRoute
   DashboardRoute: typeof DashboardRoute
   ExpensesRoute: typeof ExpensesRoute
@@ -225,6 +238,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DailyReportRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/como-funciona': {
+      id: '/como-funciona'
+      path: '/como-funciona'
+      fullPath: '/como-funciona'
+      preLoaderRoute: typeof ComoFuncionaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -237,6 +257,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ComoFuncionaRoute: ComoFuncionaRoute,
   DailyReportRoute: DailyReportRoute,
   DashboardRoute: DashboardRoute,
   ExpensesRoute: ExpensesRoute,
@@ -250,13 +271,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
