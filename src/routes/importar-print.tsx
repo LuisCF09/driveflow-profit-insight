@@ -311,6 +311,7 @@ function ImportarPrintPage() {
       }
 
       setImportedPrintId(inserted?.id ?? null);
+      setImportedImageUrl(signed.signedUrl);
       setUploaded(true);
       setDetected(empty);
       setEntrySource("manual");
