@@ -145,6 +145,7 @@ function ImportarPrintPage() {
     setUploaded(false);
     setDetected(null);
     setImportedPrintId(null);
+    setImportedImageUrl(null);
     setMode("view");
     setTouched(false);
     const reader = new FileReader();
@@ -159,6 +160,7 @@ function ImportarPrintPage() {
     setDetected(null);
     setSnapshot(null);
     setImportedPrintId(null);
+    setImportedImageUrl(null);
     setMode("view");
     setTouched(false);
     if (inputRef.current) inputRef.current.value = "";
