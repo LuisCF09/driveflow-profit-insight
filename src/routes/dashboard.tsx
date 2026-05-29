@@ -181,6 +181,12 @@ function DashboardPage() {
             <ActionCard to="/expenses" icon={<Receipt className="h-4 w-4" />} title="Despesas" sub={`${expenses.length} registradas`} />
             <ActionCard to="/goals" icon={<Target className="h-4 w-4" />} title="Metas" sub="Acompanhe seu objetivo" />
           </div>
+
+          <div className="rounded-xl border border-border/60 bg-card/30 p-3 text-xs text-muted-foreground">
+            O DriveFlow não é afiliado oficialmente a Uber, 99, iFood, Mercado Livre, Rappi
+            ou outras plataformas. Os dados servem apenas para organizar seu controle
+            financeiro.
+          </div>
         </div>
       )}
 
