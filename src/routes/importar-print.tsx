@@ -113,6 +113,7 @@ function formatDateBR(iso: string) {
 }
 
 function ImportarPrintPage() {
+  const { isPremium, loading: subLoading } = useSubscription();
   const [savedState, setSavedState] = useState<{ importedPrintId: string; platformEntryId: string } | null>(null);
   const [plataforma, setPlataforma] = useState<string>("Uber");
   const [file, setFile] = useState<File | null>(null);
@@ -123,6 +124,7 @@ function ImportarPrintPage() {
   const [detected, setDetected] = useState<DetectedData | null>(null);
   const [snapshot, setSnapshot] = useState<DetectedData | null>(null);
   const [mode, setMode] = useState<"view" | "edit">("view");
+  const [entrySource, setEntrySource] = useState<"ai" | "manual">("ai");
   const [saving, setSaving] = useState(false);
   const [importedPrintId, setImportedPrintId] = useState<string | null>(null);
   const [touched, setTouched] = useState(false);
