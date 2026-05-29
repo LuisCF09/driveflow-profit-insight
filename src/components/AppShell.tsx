@@ -102,10 +102,24 @@ export function AppShell({ children, title, onChanged }: { children: ReactNode; 
             <div className="flex items-center justify-between px-2 pb-4"><DriveFlowLogo /><button onClick={() => setOpen(false)}><X className="h-5 w-5" /></button></div>
             <nav className="space-y-1">
               {NAV.map((n) => {
-                const active = pathname === n.to; const Icon = n.icon;
+                const Icon = n.icon;
+                if (n.type === "action") {
+                  return (
+                    <button
+                      key={n.label}
+                      onClick={() => { setAddOpen(true); setOpen(false); }}
+                      className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-muted-foreground"
+                    >
+                      <Icon className="h-4 w-4" /> {n.label}
+                    </button>
+                  );
+                }
+                const active = pathname === n.to;
                 return (
                   <Link key={n.to} to={n.to} onClick={() => setOpen(false)} className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm ${active ? "bg-primary/15 text-foreground" : "text-muted-foreground"}`}>
-                    <Icon className="h-4 w-4" /> {n.label}
+                    <Icon className="h-4 w-4" />
+                    <span>{n.label}</span>
+                    {n.badge === "Premium" && <PremiumBadge />}
                   </Link>
                 );
               })}
