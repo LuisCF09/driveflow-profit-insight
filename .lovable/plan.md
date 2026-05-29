@@ -1,44 +1,32 @@
-## Goal
-Add a validated CPF field to user profiles, editable in the profile page (not at signup, to keep the auth flow minimal). Format on input, validate with the official CPF algorithm, enforce uniqueness at the DB level, and display masked everywhere except in the edit input.
+# Correção do cadastro por email/senha
 
-## Database — migration
-- `ALTER TABLE public.profiles ADD COLUMN cpf text;`
-- Store CPF as 11 digits only (no dots/dashes) — formatting is a display concern.
-- `CREATE UNIQUE INDEX profiles_cpf_unique ON public.profiles (cpf) WHERE cpf IS NOT NULL;`
-- Add a CHECK constraint: `cpf IS NULL OR cpf ~ '^\d{11}$'`.
-- RLS already allows the user to update their own profile — no policy changes.
+## Diagnóstico (causa real)
 
-## Validation utility — `src/lib/cpf.ts` (new)
-Pure helpers, no dependencies:
-- `onlyDigits(s): string`
-- `formatCPF(digits): string` → `123.456.789-09`
-- `maskCPF(digits): string` → `***.***.***-09` (only last 2 digits shown; returns `""` if empty)
-- `isValidCPF(digits): boolean`:
-  - length 11
-  - reject all-same-digit sequences (`00000000000`…`99999999999`)
-  - run the standard two-check-digit algorithm
+Testei o endpoint de signup do Supabase diretamente:
 
-## Profile page — `src/routes/profile.tsx`
-- Add CPF to the "Conta" section, below E-mail.
-- Two display modes:
-  - **Read mode (default)**: show masked value (`***.***.***-09`) with an "Editar" button. If no CPF yet, show "Não cadastrado" + "Adicionar" button.
-  - **Edit mode**: an input that:
-    - Auto-formats while typing (`onChange` strips non-digits, then formats up to 14 chars).
-    - Shows red inline error "CPF inválido" when 11 digits have been entered but the algorithm fails.
-    - "Salvar" button is disabled until `isValidCPF(digits) === true`.
-    - "Cancelar" button reverts.
-- On Save:
-  - `update profiles set cpf = <11 digits> where id = auth.uid()`.
-  - On Postgres unique-violation (code `23505`), show toast: "Este CPF já está cadastrado".
-  - On success, exit edit mode and show toast "CPF atualizado".
-- Load CPF on mount via the same `profiles` select that already runs.
+- Com senha comum (`TestPassword123!`) → **422 `weak_password` / `pwned`** → nenhum usuário criado.
+- Com senha aleatória forte (`Xq9!mB2#vL7$pK4r`) → **200 OK**, usuário criado, sessão retornada, `email_confirmed_at` preenchido (auto-confirm ligado). Não há trigger quebrado, `handle_new_user` funciona, `profiles` aceita as colunas (`id`, `name`, `email`), `subscriptions` idem. Google funciona porque não passa por validação de senha.
 
-## Out of scope
-- No CPF prompt during signup — keep `AuthCard` untouched.
-- No mask on display elsewhere in the app (CPF is only shown on the profile page).
-- No changes to `subscriptions`, `vehicles`, or any other table.
+**A causa é a proteção "Leaked Password Protection (HIBP)"** ligada no projeto. O Supabase rejeita qualquer senha que já vazou em outros sites (ex.: `123456`, `senha123`, `Teste123!`, `DriveFlow2025`, etc.), retornando `weak_password.pwned`. Por isso nenhum usuário aparece em Authentication > Users — a requisição é rejeitada antes de criar o usuário.
 
-## Acceptance check
-- Editing a valid CPF (e.g. `529.982.247-25`) saves and renders as `***.***.***-25`.
-- Editing an invalid CPF (`111.111.111-11`, random 11 digits) keeps the Save button disabled and shows "CPF inválido".
-- Trying to save a CPF already used by another user shows the "já cadastrado" toast.
+O `AuthCard` **já traduz** esse erro ("Esta senha é muito comum ou foi vazada..."), mas a mensagem aparece só como `toast.error`, que some em poucos segundos. Pior: o medidor de força do componente mostra "Senha válida" assim que passa de 6 caracteres, então o usuário tem certeza de que a senha é boa e atribui o sumiço a um bug do sistema.
+
+Nada está quebrado no banco, no trigger, no `signUp`, no `data: { name }` ou no redirect. O fluxo todo funciona quando a senha passa no HIBP.
+
+## O que vou corrigir (apenas `src/components/AuthCard.tsx`)
+
+1. **Erro inline persistente no formulário**, além do toast. Adicionar um state `formError: string | null` e renderizar uma caixa vermelha discreta logo acima do botão "Criar minha conta" quando o `signUp` falha. Limpa quando o usuário edita qualquer campo.
+2. **Aviso preventivo no medidor de força** no modo signup: trocar o texto "Senha válida" por algo como "Evite senhas comuns ou já usadas em outros sites — o cadastro rejeita senhas vazadas." Mantém a barra atual (visual inalterado).
+3. **Mensagem traduzida mais acionável** para o caso HIBP: "Esta senha já apareceu em vazamentos públicos e foi bloqueada. Use uma combinação única (ex.: 3 palavras aleatórias + número + símbolo)."
+4. **Log de diagnóstico**: `console.error("[signup]", err)` no `catch` para que, se voltar a falhar por outro motivo, eu consiga investigar pelos console logs sem novo round de debug.
+
+Nada muda em: design geral, dashboard, login Google, banco, rotas, `/onboarding`, `handle_new_user`, RLS, AuthProvider.
+
+## Não vou fazer
+- Desligar o HIBP (é proteção de segurança; o usuário não pediu).
+- Mexer no banco / migrations.
+- Alterar `signUp` payload (`data: { name }` está correto — o trigger lê `raw_user_meta_data->>'name'`).
+- Tocar em `AuthProvider`, rotas, ou no fluxo de redirect.
+
+## Detalhes técnicos
+Arquivo único alterado: `src/components/AuthCard.tsx`. Sem novas dependências, sem nova rota, sem migration.
