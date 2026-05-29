@@ -1,32 +1,36 @@
-# Correção do cadastro por email/senha
+## Diagnóstico
 
-## Diagnóstico (causa real)
+Os fluxos de **Adicionar corrida** e **Adicionar despesa** já estão implementados e funcionais. Verifiquei:
 
-Testei o endpoint de signup do Supabase diretamente:
+| Requisito | Status |
+|---|---|
+| Salvar em `rides` com `user_id` | ✅ `AddRideDialog.tsx` linha 44 |
+| Salvar em `expenses` com `user_id` | ✅ `AddExpenseDialog.tsx` linha 25 |
+| Toast de sucesso | ✅ `toast.success(...)` (sonner) |
+| Toast de erro claro | ✅ `toast.error(err.message)` no `catch` |
+| Fechar modal após salvar | ✅ todos os call sites fazem `setOpen(false)` no `onSaved` (dashboard, rides, expenses, AppShell FAB) |
+| Atualizar dashboard automaticamente | ✅ `reload()` chamado no `onSaved` |
+| Filtragem por `user_id` | ✅ via RLS (`r insert own`, `e insert own`) |
 
-- Com senha comum (`TestPassword123!`) → **422 `weak_password` / `pwned`** → nenhum usuário criado.
-- Com senha aleatória forte (`Xq9!mB2#vL7$pK4r`) → **200 OK**, usuário criado, sessão retornada, `email_confirmed_at` preenchido (auto-confirm ligado). Não há trigger quebrado, `handle_new_user` funciona, `profiles` aceita as colunas (`id`, `name`, `email`), `subscriptions` idem. Google funciona porque não passa por validação de senha.
+## Conflito de nomes de colunas
 
-**A causa é a proteção "Leaked Password Protection (HIBP)"** ligada no projeto. O Supabase rejeita qualquer senha que já vazou em outros sites (ex.: `123456`, `senha123`, `Teste123!`, `DriveFlow2025`, etc.), retornando `weak_password.pwned`. Por isso nenhum usuário aparece em Authentication > Users — a requisição é rejeitada antes de criar o usuário.
+Os nomes que você pediu **não existem** na tabela real. O código já usa os nomes corretos do schema:
 
-O `AuthCard` **já traduz** esse erro ("Esta senha é muito comum ou foi vazada..."), mas a mensagem aparece só como `toast.error`, que some em poucos segundos. Pior: o medidor de força do componente mostra "Senha válida" assim que passa de 6 caracteres, então o usuário tem certeza de que a senha é boa e atribui o sumiço a um bug do sistema.
+| Você pediu (rides) | Schema real | Você pediu (expenses) | Schema real |
+|---|---|---|---|
+| `amount` | `gross_earnings` | `name` | `description` |
+| `distance_km` | `km_driven` | | |
+| `duration_minutes` | `total_minutes` | | |
+| `notes` | `note` | | |
 
-Nada está quebrado no banco, no trigger, no `signUp`, no `data: { name }` ou no redirect. O fluxo todo funciona quando a senha passa no HIBP.
+Como você disse **"não criar tabela nova, usar apenas as tabelas existentes"**, o mapeamento atual é o correto e nada precisa ser mudado.
 
-## O que vou corrigir (apenas `src/components/AuthCard.tsx`)
+## Plano
 
-1. **Erro inline persistente no formulário**, além do toast. Adicionar um state `formError: string | null` e renderizar uma caixa vermelha discreta logo acima do botão "Criar minha conta" quando o `signUp` falha. Limpa quando o usuário edita qualquer campo.
-2. **Aviso preventivo no medidor de força** no modo signup: trocar o texto "Senha válida" por algo como "Evite senhas comuns ou já usadas em outros sites — o cadastro rejeita senhas vazadas." Mantém a barra atual (visual inalterado).
-3. **Mensagem traduzida mais acionável** para o caso HIBP: "Esta senha já apareceu em vazamentos públicos e foi bloqueada. Use uma combinação única (ex.: 3 palavras aleatórias + número + símbolo)."
-4. **Log de diagnóstico**: `console.error("[signup]", err)` no `catch` para que, se voltar a falhar por outro motivo, eu consiga investigar pelos console logs sem novo round de debug.
+**Nenhuma alteração de código é necessária.** Os dois diálogos já fazem exatamente o que você descreveu, usando as colunas reais das tabelas existentes.
 
-Nada muda em: design geral, dashboard, login Google, banco, rotas, `/onboarding`, `handle_new_user`, RLS, AuthProvider.
+Se na prática você está vendo algum bug (erro ao salvar, modal não fechando, dashboard não atualizando), me diga **a mensagem de erro exata** ou **o passo que falha**, que eu corrijo direto. Sem reprodução de bug, mexer aqui só vai gastar créditos sem mudar comportamento.
 
-## Não vou fazer
-- Desligar o HIBP (é proteção de segurança; o usuário não pediu).
-- Mexer no banco / migrations.
-- Alterar `signUp` payload (`data: { name }` está correto — o trigger lê `raw_user_meta_data->>'name'`).
-- Tocar em `AuthProvider`, rotas, ou no fluxo de redirect.
+### Alternativa (só se você quiser mesmo renomear)
 
-## Detalhes técnicos
-Arquivo único alterado: `src/components/AuthCard.tsx`. Sem novas dependências, sem nova rota, sem migration.
+Se você prefere que as colunas se chamem `amount`, `distance_km`, `duration_minutes`, `notes`, `name` para combinar com seu pedido, isso exigiria **migração SQL renomeando colunas** em `rides` e `expenses` + atualizar todos os lugares que leem esses campos (dashboard, hook `use-driveflow-data`, `lib/finance.ts`, páginas `rides` e `expenses`, relatórios). É um refactor maior — me confirme antes que eu vou nessa direção.
