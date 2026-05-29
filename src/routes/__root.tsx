@@ -34,8 +34,9 @@ function NotFoundComponent() {
 }
 
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
-  console.error(error);
+  console.error("[root error boundary]", error);
   const router = useRouter();
+  const detail = error?.message || String(error);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -46,6 +47,11 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
         <p className="mt-2 text-sm text-muted-foreground">
           Something went wrong on our end. You can try refreshing or head back home.
         </p>
+        {detail && (
+          <pre className="mt-3 max-h-40 overflow-auto rounded-md border border-border bg-card/60 p-2 text-left text-[11px] text-muted-foreground">
+            {detail}
+          </pre>
+        )}
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
             onClick={() => {
