@@ -22,7 +22,7 @@ const PREMIUM = [
   "Preenchimento automático dos dados",
   "Relatórios ilimitados",
   "Histórico financeiro completo",
-  "Comparativo entre plataformas",
+  "Comparativo entre aplicativos (Uber, 99, iFood e outras)",
   "Análise de ganho por hora e por km",
   "Acompanhamento mensal completo",
 ];
