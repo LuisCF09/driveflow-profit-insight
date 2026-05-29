@@ -13,6 +13,7 @@ import { Route as RidesRouteImport } from './routes/rides'
 import { Route as ReportsRouteImport } from './routes/reports'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as PremiumRouteImport } from './routes/premium'
+import { Route as PlanosRouteImport } from './routes/planos'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as ImportarPrintRouteImport } from './routes/importar-print'
 import { Route as HistoricoRouteImport } from './routes/historico'
@@ -41,6 +42,11 @@ const ProfileRoute = ProfileRouteImport.update({
 const PremiumRoute = PremiumRouteImport.update({
   id: '/premium',
   path: '/premium',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PlanosRoute = PlanosRouteImport.update({
+  id: '/planos',
+  path: '/planos',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OnboardingRoute = OnboardingRouteImport.update({
@@ -99,6 +105,7 @@ export interface FileRoutesByFullPath {
   '/historico': typeof HistoricoRoute
   '/importar-print': typeof ImportarPrintRoute
   '/onboarding': typeof OnboardingRoute
+  '/planos': typeof PlanosRoute
   '/premium': typeof PremiumRoute
   '/profile': typeof ProfileRoute
   '/reports': typeof ReportsRoute
@@ -114,6 +121,7 @@ export interface FileRoutesByTo {
   '/historico': typeof HistoricoRoute
   '/importar-print': typeof ImportarPrintRoute
   '/onboarding': typeof OnboardingRoute
+  '/planos': typeof PlanosRoute
   '/premium': typeof PremiumRoute
   '/profile': typeof ProfileRoute
   '/reports': typeof ReportsRoute
@@ -130,6 +138,7 @@ export interface FileRoutesById {
   '/historico': typeof HistoricoRoute
   '/importar-print': typeof ImportarPrintRoute
   '/onboarding': typeof OnboardingRoute
+  '/planos': typeof PlanosRoute
   '/premium': typeof PremiumRoute
   '/profile': typeof ProfileRoute
   '/reports': typeof ReportsRoute
@@ -147,6 +156,7 @@ export interface FileRouteTypes {
     | '/historico'
     | '/importar-print'
     | '/onboarding'
+    | '/planos'
     | '/premium'
     | '/profile'
     | '/reports'
@@ -162,6 +172,7 @@ export interface FileRouteTypes {
     | '/historico'
     | '/importar-print'
     | '/onboarding'
+    | '/planos'
     | '/premium'
     | '/profile'
     | '/reports'
@@ -177,6 +188,7 @@ export interface FileRouteTypes {
     | '/historico'
     | '/importar-print'
     | '/onboarding'
+    | '/planos'
     | '/premium'
     | '/profile'
     | '/reports'
@@ -193,6 +205,7 @@ export interface RootRouteChildren {
   HistoricoRoute: typeof HistoricoRoute
   ImportarPrintRoute: typeof ImportarPrintRoute
   OnboardingRoute: typeof OnboardingRoute
+  PlanosRoute: typeof PlanosRoute
   PremiumRoute: typeof PremiumRoute
   ProfileRoute: typeof ProfileRoute
   ReportsRoute: typeof ReportsRoute
@@ -227,6 +240,13 @@ declare module '@tanstack/react-router' {
       path: '/premium'
       fullPath: '/premium'
       preLoaderRoute: typeof PremiumRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/planos': {
+      id: '/planos'
+      path: '/planos'
+      fullPath: '/planos'
+      preLoaderRoute: typeof PlanosRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/onboarding': {
@@ -305,6 +325,7 @@ const rootRouteChildren: RootRouteChildren = {
   HistoricoRoute: HistoricoRoute,
   ImportarPrintRoute: ImportarPrintRoute,
   OnboardingRoute: OnboardingRoute,
+  PlanosRoute: PlanosRoute,
   PremiumRoute: PremiumRoute,
   ProfileRoute: ProfileRoute,
   ReportsRoute: ReportsRoute,
@@ -313,3 +334,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

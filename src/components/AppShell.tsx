@@ -17,6 +17,7 @@ const NAV = [
   { to: "/como-funciona", label: "Como funciona", icon: HelpCircle },
   { to: "/importar-print", label: "Importar Print", icon: ImageUp },
   { to: "/profile", label: "Perfil", icon: User },
+  { to: "/planos", label: "Planos", icon: Crown },
   { to: "/premium", label: "Premium", icon: Crown },
 ] as const;
 
