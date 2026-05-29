@@ -19,15 +19,29 @@ export function AuthCard() {
     if (formError) setFormError(null);
   }
 
-  function translateError(message: string) {
+  function translateError(err: unknown): string {
+    const anyErr = err as { code?: string; reasons?: string[]; message?: string } | null;
+    const code = anyErr?.code ?? "";
+    const reasons = anyErr?.reasons ?? [];
+    const message = anyErr?.message ?? (err instanceof Error ? err.message : "Algo deu errado.");
     const m = message.toLowerCase();
-    if (m.includes("invalid login")) return "Email ou senha incorretos.";
-    if (m.includes("already registered") || m.includes("user already")) return "Este email já está cadastrado. Faça login.";
-    if (m.includes("pwned") || m.includes("leaked") || m.includes("compromised")) return "Esta senha já apareceu em vazamentos públicos e foi bloqueada por segurança. Use uma combinação única (ex.: 3 palavras aleatórias + número + símbolo).";
-    if (m.includes("weak password")) return "Senha muito fraca. Combine letras maiúsculas, minúsculas, números e símbolos.";
+
+    if ((code === "weak_password" && reasons.includes("pwned")) || m.includes("pwned") || m.includes("leaked")) {
+      return "Essa senha já apareceu em vazamentos públicos. Escolha uma senha diferente, de preferência única para esta conta.";
+    }
+    if (code === "weak_password" || m.includes("weak")) {
+      return "Senha muito fraca. Use ao menos 8 caracteres, misturando letras, números e símbolos.";
+    }
+    if (code === "user_already_exists" || code === "email_exists" || m.includes("already registered") || m.includes("user already")) {
+      return "Já existe uma conta com este email. Tente fazer login.";
+    }
+    if (code === "invalid_credentials" || m.includes("invalid login")) {
+      return "Email ou senha incorretos.";
+    }
+    if (code === "over_email_send_rate_limit" || m.includes("rate limit")) {
+      return "Muitas tentativas. Aguarde alguns minutos e tente novamente.";
+    }
     if (m.includes("at least") && m.includes("character")) return "A senha deve ter pelo menos 6 caracteres.";
-    if (m.includes("password should") || m.includes("password must")) return "Senha não atende aos requisitos. Tente uma combinação mais forte.";
-    if (m.includes("password")) return message;
     if (m.includes("email")) return "Email inválido.";
     return message;
   }
