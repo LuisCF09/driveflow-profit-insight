@@ -1,36 +1,55 @@
-# Plano: Finalizar ação "Confirmar e salvar"
+# Plano: Página "Histórico Financeiro"
 
-Hoje a tela já atualiza `imported_prints` e insere em `platform_entries` ao confirmar, mas redireciona direto para `/`. Vou ajustar para mostrar uma tela de sucesso explícita com a mensagem solicitada e três botões de próximo passo, mantendo proteção contra duplo clique e tratamento de erro.
+Criar uma nova rota `/historico` que lista os registros de `platform_entries` do usuário autenticado, com filtros, cards de resumo, edição inline e exclusão. RLS já restringe a `auth.uid() = user_id`, então não há mudanças de schema.
 
-## Alterações em `src/routes/importar-print.tsx`
+## Arquivos
 
-### 1. Novo estado de sucesso
-- `savedState: { importedPrintId: string; platformEntryId: string } | null`.
-- Quando setado, esconde o formulário/upload/seção de revisão e renderiza um card de sucesso.
+### 1. Novo: `src/routes/historico.tsx`
+Rota `createFileRoute("/historico")` com `head()` próprio ("Histórico Financeiro — DriveFlow"). Componente client-side que faz fetch via `supabase.from("platform_entries").select(...).eq("user_id", user.id)`.
 
-### 2. `confirmarSalvar()`
-- Manter validação (plataforma, data, ganho bruto > 0).
-- Manter `saving` como guarda contra duplo clique; sair cedo se `saving` já estiver `true` ou se `savedState` já existir.
-- Update de `imported_prints` com os campos: `entry_date`, `gross_earnings`, `worked_hours`, `trips_count`, `kilometers`, `tips`, `fees`, `confidence`, `notes`, `status = "confirmed"`.
-- Insert em `platform_entries` com `user_id`, `platform_name`, `entry_date`, `gross_earnings`, `worked_hours`, `trips_count`, `kilometers`, `source = "imported_print"`, `imported_print_id`, `notes`. Usar `.select('id').single()` para guardar o id.
-- Em sucesso: setar `savedState`, toast `"Registro salvo com sucesso no seu histórico financeiro."`.
-- Em erro: toast com a mensagem e manter o usuário na revisão para tentar novamente; **não** marcar como salvo.
-- Rollback parcial: se o update de `imported_prints` deu certo mas o insert em `platform_entries` falhou, reverter `status` para `pending_review` para permitir nova tentativa sem duplicar.
+#### Estado e dados
+- `entries: PlatformEntry[]` carregados ao montar.
+- `loading`, `error`.
+- Filtros (todos client-side sobre o array carregado):
+  - `platformFilter: string` ("todas" | nome) — derivado dos valores distintos.
+  - `range: number` (7 / 15 / 30 / 90 / 180 / 365 / "todos") aplicado a `entry_date`.
+  - `sourceFilter: "todos" | "manual" | "imported_print"`.
 
-### 3. Card de sucesso
-Renderizado quando `savedState` existe, substituindo o conteúdo da página (mantendo `AppShell`):
-- Ícone de check + título "Registro salvo com sucesso"
-- Subtítulo: "Registro salvo com sucesso no seu histórico financeiro."
-- Três botões:
-  - **Ver dashboard** → `/dashboard`
-  - **Importar outro print** → chama `clearAll()` + `setSavedState(null)` (permanece em `/importar-print`)
-  - **Ver histórico** → `/reports`
+#### Cards de resumo (computados sobre a lista filtrada)
+- Total ganho (R$): soma `gross_earnings`.
+- Total de horas: soma `worked_hours`.
+- Total de km: soma `kilometers`.
+- Média por hora: `total_ganho / total_horas` (omite quando horas = 0).
+- Média por km: `total_ganho / total_km` (omite quando km = 0).
 
-### 4. Loading e proteção
-- Botão "Confirmar e salvar" já mostra spinner via `saving` e fica `disabled`. Adicionar guarda no topo da função: `if (saving || savedState) return;`.
+Grid responsivo de 5 cards (`grid-cols-2 md:grid-cols-5`).
+
+#### Tabela / Lista
+- Em telas `md+`: `<table>` com colunas Data, Plataforma, Ganho bruto, Horas, Corridas/entregas, Km, Origem, Observações, Ações.
+- Em telas pequenas: stack de cards com os mesmos campos rotulados.
+- Origem: pill "Manual" ou "Importado por print" (com cor/ícone distinto).
+- Estado vazio: mensagem "Nenhum registro encontrado para os filtros selecionados."
+
+#### Ações por linha
+- **Editar**: abre um modal/painel inline (dialog próprio do projeto ou seção expansível) com os mesmos campos editáveis usados na tela de importar (data, ganho bruto, horas, corridas, km, observações, plataforma). Salva via `update` em `platform_entries` (com `eq("id", row.id)`; RLS garante posse).
+- **Excluir**: confirmação simples (`window.confirm`) e depois `delete().eq("id", row.id)`. Atualiza a lista local.
+- Toasts de sucesso/erro via `sonner`.
+
+#### Segurança
+- Filtra pelo `user.id` retornado por `supabase.auth.getUser()`, embora RLS já garanta isso.
+- Redireciona para `/` se não autenticado (o `AppShell` já cobre, mas mantém checagem antes do fetch).
+
+### 2. Editar `src/components/AppShell.tsx`
+Adicionar item de navegação na constante `NAV`:
+```
+{ to: "/historico", label: "Histórico", icon: History },
+```
+Importar `History` de `lucide-react`. Posicionar entre "Relatórios" e "Como funciona".
+
+### 3. Editar `src/routes/importar-print.tsx`
+No card de sucesso, atualizar o botão "Ver histórico" para `to="/historico"` (hoje aponta para `/reports`).
 
 ## Out of scope
-- Sem alterações de schema, RLS ou outras telas.
-
-## Arquivos alterados
-- `src/routes/importar-print.tsx`
+- Sem alterações no banco (RLS e tabela já atendem).
+- Sem paginação/infinite scroll — a tabela carrega todos os registros do usuário (limite padrão do Supabase = 1000 é suficiente nesta fase). Adicionar uma nota mental para paginar quando crescer.
+- Sem export CSV.

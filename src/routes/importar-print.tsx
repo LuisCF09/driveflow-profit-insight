@@ -395,7 +395,7 @@ function ImportarPrintPage() {
                 Importar outro
               </button>
               <Link
-                to="/reports"
+                to="/historico"
                 className="inline-flex items-center justify-center gap-2 rounded-xl border border-border/60 bg-card/40 px-4 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-card/60"
               >
                 <ListChecks className="h-4 w-4" />
