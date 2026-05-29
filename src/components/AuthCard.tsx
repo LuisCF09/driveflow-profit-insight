@@ -150,6 +150,15 @@ export function AuthCard() {
           </div>
         )}
 
+        {formError && (
+          <div
+            role="alert"
+            className="rounded-xl border border-red-500/40 bg-red-500/10 px-3.5 py-2.5 text-[12px] leading-snug text-red-300"
+          >
+            {formError}
+          </div>
+        )}
+
         <button
           type="submit"
           disabled={loading}
