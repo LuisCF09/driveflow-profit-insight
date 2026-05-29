@@ -1,53 +1,38 @@
-## Plano: Nova página "Como funciona"
+## Nova tela: Importar Print
 
 ### Objetivo
-Criar uma nova rota `/como-funciona` que explique de forma simples e direta o que é o DriveFlow e por que ele é útil para motoristas e entregadores.
+Criar uma tela para motoristas e entregadores enviarem prints dos aplicativos de trabalho, facilitando o registro dos ganhos no DriveFlow.
 
-### Passos
+### Estrutura
 
-1. **Criar rota `src/routes/como-funciona.tsx`**
-   - Definir `head()` com título e meta descrição SEO
-   - Usar `AppShell` como wrapper (igual às outras páginas internas)
-   - Título na AppShell: "Como funciona"
-   - Estrutura da página:
-     - Título principal: "Entenda seu lucro real como motorista ou entregador"
-     - Texto introdutório explicativo
-     - 4 cards explicativos em grid (2 colunas desktop, 1 coluna mobile) com ícones do Lucide
-       1. Registre seus ganhos (icon: `TrendingUp`)
-       2. Adicione seus custos (icon: `Receipt`)
-       3. Importe prints e comprovantes (icon: `ImageUp`)
-       4. Veja seu lucro real (icon: `BarChart3`)
-     - Seção "O que você está pagando?" com texto explicativo sobre o plano pago
-     - Observação final em estilo disclaimer
-   - Estilo visual:
-     - Usar tokens do design system: `bg-hero`, `grid-bg`, `glass` cards
-     - Ícones em tom neon/azul primário
-     - Tipografia `font-display` para títulos
-     - Espaçamento coerente com as outras páginas
+1. **Nova rota:** `src/routes/importar-print.tsx`
+   - Usa `AppShell` como wrapper
+   - `head()` com title e description
+   - Componente com os seguintes elementos:
+     - Título principal: "Importar print dos seus ganhos"
+     - Texto explicativo sobre envio de prints
+     - Seletor de plataforma (dropdown/select) com opções: Uber, 99, iFood, Mercado Livre, Rappi, Outros
+     - Campo de upload de imagem (PNG, JPG, JPEG) com drag-and-drop visual e preview do arquivo selecionado
+     - Botão "Analisar print" (estilo gradiente primário, desabilitado quando nenhuma imagem for selecionada)
+     - Área de resultado: estado vazio com texto "Após enviar e analisar um print, os dados detectados aparecerão aqui para revisão."
+     - Aviso importante em card com ícone: "Nenhuma informação será salva automaticamente. Você poderá revisar tudo antes de confirmar."
 
-2. **Adicionar aba ao menu principal (`src/components/AppShell.tsx`)**
-   - Inserir novo item no array `NAV`:
-     - `to: "/como-funciona"`
-     - `label: "Como funciona"`
-     - `icon: HelpCircle` (do lucide-react)
-   - Posicionar após "Painel" ou antes de "Premium", conforme hierarquia lógica
+2. **Atualização do menu:** `src/components/AppShell.tsx`
+   - Adicionar item "Importar Print" no array `NAV` com ícone `ImageUp` (Lucide)
+   - Posicionar entre "Como funciona" e "Perfil"
 
-3. **Registro automático de rota**
-   - O TanStack Router detectará o novo arquivo e gerará `routeTree.gen.ts` automaticamente durante o build/dev. Nenhuma edição manual necessária.
+### Estilo visual
+- Design tokens do DriveFlow: `bg-hero`, `glass` para cards, `font-display` para títulos
+- Cards com bordas sutis e backdrop blur
+- Ícones Lucide (ImageUp, Upload, AlertCircle, etc.)
+- Cores: neon/azul primário, text-muted-foreground para textos secundários
+- Layout responsivo: max-w-3xl centralizado, cards empilhados em mobile
 
-### Design tokens a utilizar
-- `bg-hero` + `grid-bg` para fundo
-- `glass` para cards (bordas arredondadas, blur, borda sutil)
-- `--neon` / `text-[var(--neon)]` para ícones e destaques
-- `font-display` para títulos, `text-muted-foreground` para corpos de texto
-- `border-border/60` para separadores
+### Nota sobre funcionalidade
+- Por enquanto, apenas a interface visual completa. A análise real via IA será implementada futuramente.
+- O botão "Analisar print" mostrará um estado de loading simulado por enquanto, sem chamada de API real.
+- O upload de imagem será apenas no cliente (FileReader para preview), sem envio ao backend nesta fase.
 
-### Arquivos alterados
-- `src/routes/como-funciona.tsx` (novo)
-- `src/components/AppShell.tsx` (edição no array NAV)
-
-### Não serão alterados
-- Design principal / tokens CSS
-- Sistema de autenticação
-- Backend / banco de dados
-- Outras páginas existentes
+### Roteamento
+- TanStack Router auto-registra a nova rota via `src/routes/importar-print.tsx` (gera `/importar-print`)
+- Não editar `routeTree.gen.ts` manualmente
