@@ -604,6 +604,44 @@ function HistoricoPage() {
           </div>
         </div>
       )}
+
+      {/* Confirmação de exclusão */}
+      <AlertDialog
+        open={confirmDelete !== null}
+        onOpenChange={(open) => {
+          if (!open && deletingId === null) setConfirmDelete(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir registro?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmDelete?.imported_print_id
+                ? "Este registro será removido do seu histórico financeiro. O print importado e a imagem original também serão apagados. Esta ação não pode ser desfeita."
+                : "Este registro será removido do seu histórico financeiro. Esta ação não pode ser desfeita."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deletingId !== null}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                if (confirmDelete) handleDelete(confirmDelete);
+              }}
+              disabled={deletingId !== null}
+              className="bg-rose-500/90 text-white hover:bg-rose-500"
+            >
+              {deletingId !== null ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" /> Excluindo...
+                </>
+              ) : (
+                "Excluir"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AppShell>
   );
 }
