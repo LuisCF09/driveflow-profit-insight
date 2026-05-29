@@ -108,6 +108,20 @@ function DashboardPage() {
             <Stat icon={<Calendar className="h-4 w-4" />} label="Dias trabalhados" value={String(daysWorked)} />
           </div>
 
+          {/* Lucro líquido estimado (platform_entries) */}
+          <div className="glass shadow-card rounded-2xl p-4 sm:p-6">
+            <div className="mb-3">
+              <div className="font-display text-base font-semibold">Lucro líquido estimado</div>
+              <div className="text-xs text-muted-foreground">Esse é o valor estimado que sobrou depois dos custos informados.</div>
+            </div>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              <Stat icon={<Wallet className="h-4 w-4" />} label="Ganho bruto" value={brl(netSummary.gross)} />
+              <Stat icon={<Fuel className="h-4 w-4" />} label="Custos totais" value={brl(netSummary.costs)} />
+              <Stat icon={<TrendingUp className="h-4 w-4" />} label="Lucro líquido" value={brl(netSummary.net)} />
+              <Stat icon={<TrendingUp className="h-4 w-4" />} label="Margem de lucro" value={`${netSummary.margin.toFixed(1)}%`} />
+            </div>
+          </div>
+
           {/* Chart */}
           {isPremium ? (
             <div className="glass shadow-card rounded-2xl p-4 sm:p-6">
