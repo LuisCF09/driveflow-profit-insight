@@ -948,9 +948,14 @@ function ImportarPrintPage() {
         <div className="flex items-start gap-2 text-xs text-muted-foreground">
           <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
           <span>
-            A leitura automática de prints com IA está em desenvolvimento. Por enquanto,
-            os dados detectados são gerados em modo de simulação para você revisar.
+            A leitura inteligente tenta identificar os dados do print, mas você sempre deve
+            revisar antes de salvar.
           </span>
+        </div>
+
+        <div className="rounded-xl border border-border/60 bg-card/30 p-3 text-xs text-muted-foreground">
+          O DriveFlow não é afiliado oficialmente às plataformas citadas. Os dados são
+          usados apenas para organizar seu controle financeiro.
         </div>
       </div>
     </AppShell>
