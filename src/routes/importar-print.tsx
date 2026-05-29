@@ -636,13 +636,33 @@ function ImportarPrintPage() {
             />
           </div>
 
-          {/* Botão analisar */}
-          <div className="mt-6 flex justify-end">
+          {/* Botões de ação */}
+          <div className="mt-6 flex flex-col-reverse items-stretch gap-2 sm:flex-row sm:items-center sm:justify-end">
             <button
               type="button"
-              onClick={analisar}
+              onClick={preencherManual}
               disabled={!file || loading || uploaded}
-              className="bg-gradient-primary shadow-glow inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-primary-foreground transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-border/60 bg-card/60 px-5 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-card/80 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <Hand className="h-4 w-4" />
+              Preencher manualmente
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                if (!isPremium) {
+                  toast.info("Leitura inteligente é exclusiva do Premium. Use 'Preencher manualmente'.");
+                  return;
+                }
+                analisar();
+              }}
+              disabled={!file || loading || uploaded}
+              title={!isPremium ? "Função Premium" : undefined}
+              className={`inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold transition-opacity disabled:cursor-not-allowed disabled:opacity-50 ${
+                isPremium
+                  ? "bg-gradient-primary shadow-glow text-primary-foreground"
+                  : "border border-amber-500/40 bg-amber-500/10 text-amber-200 hover:bg-amber-500/15"
+              }`}
             >
               {loading ? (
                 <>
@@ -651,8 +671,8 @@ function ImportarPrintPage() {
                 </>
               ) : (
                 <>
-                  <Sparkles className="h-4 w-4" />
-                  Analisar print
+                  {isPremium ? <Sparkles className="h-4 w-4" /> : <Crown className="h-4 w-4" />}
+                  {isPremium ? "Analisar print" : "Analisar print (Premium)"}
                 </>
               )}
             </button>
