@@ -710,14 +710,25 @@ function ImportarPrintPage() {
             </div>
           ) : (
             <div className="mt-4 space-y-4">
-              <div className="flex items-start gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
-                <FlaskConical className="mt-0.5 h-4 w-4 shrink-0" />
-                <span>
-                  <strong className="font-semibold">Modo de simulação:</strong> a leitura
-                  inteligente ainda não está ativa. Revise as informações abaixo — nada é
-                  salvo até você clicar em <em>Confirmar e salvar</em>.
-                </span>
-              </div>
+              {entrySource === "ai" ? (
+                <div className="flex items-start gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+                  <FlaskConical className="mt-0.5 h-4 w-4 shrink-0" />
+                  <span>
+                    <strong className="font-semibold">Modo de simulação:</strong> a leitura
+                    inteligente ainda não está ativa. Revise as informações abaixo — nada é
+                    salvo até você clicar em <em>Confirmar e salvar</em>.
+                  </span>
+                </div>
+              ) : (
+                <div className="flex items-start gap-2 rounded-xl border border-border/60 bg-card/30 px-3 py-2 text-xs text-muted-foreground">
+                  <Hand className="mt-0.5 h-4 w-4 shrink-0 text-[var(--neon)]" />
+                  <span>
+                    <strong className="font-semibold text-foreground">Preenchimento manual:</strong>{" "}
+                    informe os dados do print abaixo. Nada é salvo até você clicar em{" "}
+                    <em>Confirmar e salvar</em>.
+                  </span>
+                </div>
+              )}
 
               {mode === "view" ? (
                 <div className="grid grid-cols-1 gap-x-4 gap-y-3 sm:grid-cols-2">
