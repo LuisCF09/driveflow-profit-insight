@@ -130,6 +130,7 @@ function ImportarPrintPage() {
   const [entrySource, setEntrySource] = useState<"ai" | "manual">("ai");
   const [saving, setSaving] = useState(false);
   const [importedPrintId, setImportedPrintId] = useState<string | null>(null);
+  const [importedImageUrl, setImportedImageUrl] = useState<string | null>(null);
   const [touched, setTouched] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
