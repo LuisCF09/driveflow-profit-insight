@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   ImageUp,
   Upload,
@@ -13,6 +13,10 @@ import {
   Pencil,
   Check,
   Ban,
+  LayoutDashboard,
+  ListChecks,
+  RotateCcw,
+  PartyPopper,
 } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { toast } from "sonner";
@@ -105,7 +109,7 @@ function formatDateBR(iso: string) {
 }
 
 function ImportarPrintPage() {
-  const navigate = useNavigate();
+  const [savedState, setSavedState] = useState<{ importedPrintId: string; platformEntryId: string } | null>(null);
   const [plataforma, setPlataforma] = useState<string>("Uber");
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
@@ -264,6 +268,7 @@ function ImportarPrintPage() {
 
   async function confirmarSalvar() {
     if (!detected || !importedPrintId) return;
+    if (saving || savedState) return;
     if (!isValid) {
       setTouched(true);
       toast.error("Preencha plataforma, data e ganho bruto antes de salvar.");
@@ -300,32 +305,45 @@ function ImportarPrintPage() {
         return;
       }
 
-      const { error: peErr } = await supabase.from("platform_entries").insert({
-        user_id: userId,
-        platform_name: payload.platform_name,
-        entry_date: payload.entry_date,
-        gross_earnings: payload.gross_earnings,
-        worked_hours: payload.worked_hours,
-        trips_count: payload.trips_count,
-        kilometers: payload.kilometers,
-        notes: payload.notes,
-        source: "imported_print",
-        imported_print_id: importedPrintId,
-      });
-      if (peErr) {
-        toast.error(`Falha ao salvar registro: ${peErr.message}`);
+      const { data: peData, error: peErr } = await supabase
+        .from("platform_entries")
+        .insert({
+          user_id: userId,
+          platform_name: payload.platform_name,
+          entry_date: payload.entry_date,
+          gross_earnings: payload.gross_earnings,
+          worked_hours: payload.worked_hours,
+          trips_count: payload.trips_count,
+          kilometers: payload.kilometers,
+          notes: payload.notes,
+          source: "imported_print",
+          imported_print_id: importedPrintId,
+        })
+        .select("id")
+        .single();
+      if (peErr || !peData) {
+        // rollback parcial: volta para pending_review para permitir nova tentativa sem duplicar
+        await supabase
+          .from("imported_prints")
+          .update({ status: "pending_review" })
+          .eq("id", importedPrintId);
+        toast.error(`Falha ao salvar registro: ${peErr?.message ?? "erro desconhecido"}`);
         return;
       }
 
-      toast.success("Registro salvo com sucesso!");
-      clearAll();
-      navigate({ to: "/" }).catch(() => {});
+      setSavedState({ importedPrintId, platformEntryId: peData.id });
+      toast.success("Registro salvo com sucesso no seu histórico financeiro.");
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Erro inesperado.";
       toast.error(msg);
     } finally {
       setSaving(false);
     }
+  }
+
+  function importarOutro() {
+    clearAll();
+    setSavedState(null);
   }
 
   async function cancelarImportacao() {
@@ -345,9 +363,55 @@ function ImportarPrintPage() {
     clearAll();
   }
 
+  if (savedState) {
+    return (
+      <AppShell title="Importar Print">
+        <div className="mx-auto max-w-xl">
+          <div className="glass rounded-2xl p-8 text-center">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-500/15 ring-1 ring-emerald-500/30">
+              <PartyPopper className="h-7 w-7 text-emerald-300" />
+            </div>
+            <h1 className="font-display text-2xl font-semibold tracking-tight">
+              Registro salvo com sucesso
+            </h1>
+            <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
+              Registro salvo com sucesso no seu histórico financeiro.
+            </p>
+
+            <div className="mt-6 grid grid-cols-1 gap-2 sm:grid-cols-3">
+              <Link
+                to="/dashboard"
+                className="bg-gradient-primary shadow-glow inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-primary-foreground"
+              >
+                <LayoutDashboard className="h-4 w-4" />
+                Ver dashboard
+              </Link>
+              <button
+                type="button"
+                onClick={importarOutro}
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-border/60 bg-card/60 px-4 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-card/80"
+              >
+                <RotateCcw className="h-4 w-4" />
+                Importar outro
+              </button>
+              <Link
+                to="/reports"
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-border/60 bg-card/40 px-4 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-card/60"
+              >
+                <ListChecks className="h-4 w-4" />
+                Ver histórico
+              </Link>
+            </div>
+          </div>
+        </div>
+      </AppShell>
+    );
+  }
+
   return (
     <AppShell title="Importar Print">
       <div className="mx-auto max-w-3xl space-y-8">
+
         {/* Hero */}
         <section className="text-center">
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/15 ring-1 ring-primary/30">
