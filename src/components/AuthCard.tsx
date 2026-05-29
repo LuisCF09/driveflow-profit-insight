@@ -81,8 +81,7 @@ export function AuthCard() {
       }
     } catch (err) {
       console.error("[auth]", mode, err);
-      const msg = err instanceof Error ? err.message : "Algo deu errado.";
-      const translated = translateError(msg);
+      const translated = translateError(err);
       setFormError(translated);
       toast.error(translated);
     } finally {
