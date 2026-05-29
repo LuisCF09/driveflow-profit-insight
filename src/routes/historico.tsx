@@ -209,7 +209,7 @@ function HistoricoPage() {
                 Histórico Financeiro
               </h1>
               <p className="text-sm text-muted-foreground">
-                Todos os seus registros, importados ou inseridos manualmente.
+                Todos os seus registros de ganhos por aplicativo, importados ou inseridos manualmente, organizados em um só lugar.
               </p>
             </div>
           </div>
@@ -427,6 +427,11 @@ function HistoricoPage() {
             </>
           )}
         </section>
+
+        <div className="rounded-xl border border-border/60 bg-card/30 p-3 text-xs text-muted-foreground">
+          O DriveFlow não é afiliado oficialmente às plataformas citadas. Os dados servem
+          apenas para organizar seu controle financeiro.
+        </div>
       </div>
 
       {/* Modal de edição */}

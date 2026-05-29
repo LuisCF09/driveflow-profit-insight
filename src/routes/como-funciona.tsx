@@ -20,7 +20,7 @@ const CARDS = [
   {
     icon: TrendingUp,
     title: "Registre seus ganhos",
-    text: "Adicione quanto você ganhou em plataformas como Uber, 99, iFood, Mercado Livre, Rappi ou outras.",
+    text: "Registre seus ganhos de plataformas como Uber, 99, iFood, Mercado Livre, Rappi e outras.",
   },
   {
     icon: Receipt,
@@ -30,12 +30,12 @@ const CARDS = [
   {
     icon: ImageUp,
     title: "Importe prints e comprovantes",
-    text: "Envie prints dos seus aplicativos para facilitar o preenchimento dos dados financeiros.",
+    text: "Importe prints dos seus aplicativos para facilitar o preenchimento dos dados financeiros.",
   },
   {
     icon: BarChart3,
-    title: "Veja seu lucro real",
-    text: "O DriveFlow calcula lucro líquido, ganho por hora, custo por km e desempenho por período.",
+    title: "Veja seu lucro estimado",
+    text: "Com base nos dados que você registra, o DriveFlow calcula lucro líquido estimado, ganho por hora, custo por km e desempenho por período.",
   },
 ];
 
@@ -94,19 +94,27 @@ function ComoFuncionaPage() {
               <h2 className="font-display text-xl font-semibold">O que você está pagando?</h2>
               <p className="mt-2 text-sm text-muted-foreground sm:text-base">
                 No plano pago, o usuário tem acesso a relatórios mais completos, histórico
-                financeiro, comparativos entre plataformas e futuramente leitura inteligente
-                de prints com IA.
+                financeiro, comparativos entre aplicativos e leitura inteligente de prints. A
+                leitura inteligente tenta identificar os dados do print, mas você sempre deve
+                revisar antes de salvar.
               </p>
             </div>
           </div>
         </section>
 
         {/* Observação */}
-        <section className="flex items-start gap-3 rounded-xl border border-border/60 bg-card/30 p-4">
-          <Info className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-          <p className="text-sm text-muted-foreground">
-            O DriveFlow não substitui os aplicativos de corrida ou entrega. Ele serve para
-            organizar e analisar seus ganhos de forma mais clara.
+        <section className="space-y-2 rounded-xl border border-border/60 bg-card/30 p-4">
+          <div className="flex items-start gap-3">
+            <Info className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+            <p className="text-sm text-muted-foreground">
+              O DriveFlow não substitui os aplicativos de corrida ou entrega. Ele serve para
+              organizar e analisar seus ganhos de forma mais clara.
+            </p>
+          </div>
+          <p className="pl-7 text-xs text-muted-foreground">
+            O DriveFlow não é afiliado oficialmente às plataformas citadas. Os nomes Uber, 99,
+            iFood, Mercado Livre e Rappi são marcas dos seus respectivos donos. Os dados são
+            usados apenas para organizar seu controle financeiro.
           </p>
         </section>
       </div>

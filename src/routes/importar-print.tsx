@@ -501,9 +501,9 @@ function ImportarPrintPage() {
             Importar print dos seus ganhos
           </h1>
           <p className="mx-auto mt-3 max-w-2xl text-sm text-muted-foreground sm:text-base">
-            Envie um print da tela de ganhos do seu aplicativo. O DriveFlow tentará
-            identificar as informações principais, mas você sempre poderá revisar e editar
-            antes de salvar.
+            Envie um print da tela de ganhos do seu aplicativo (Uber, 99, iFood, Mercado
+            Livre, Rappi e outras). A leitura inteligente tenta identificar os dados do
+            print, mas você sempre deve revisar antes de salvar.
           </p>
         </section>
 
@@ -714,9 +714,9 @@ function ImportarPrintPage() {
                 <div className="flex items-start gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
                   <FlaskConical className="mt-0.5 h-4 w-4 shrink-0" />
                   <span>
-                    <strong className="font-semibold">Modo de simulação:</strong> a leitura
-                    inteligente ainda não está ativa. Revise as informações abaixo — nada é
-                    salvo até você clicar em <em>Confirmar e salvar</em>.
+                    A leitura inteligente tenta identificar os dados do print, mas você
+                    sempre deve revisar antes de salvar. Nada é salvo até você clicar em{" "}
+                    <em>Confirmar e salvar</em>.
                   </span>
                 </div>
               ) : (
@@ -948,9 +948,14 @@ function ImportarPrintPage() {
         <div className="flex items-start gap-2 text-xs text-muted-foreground">
           <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
           <span>
-            A leitura automática de prints com IA está em desenvolvimento. Por enquanto,
-            os dados detectados são gerados em modo de simulação para você revisar.
+            A leitura inteligente tenta identificar os dados do print, mas você sempre deve
+            revisar antes de salvar.
           </span>
+        </div>
+
+        <div className="rounded-xl border border-border/60 bg-card/30 p-3 text-xs text-muted-foreground">
+          O DriveFlow não é afiliado oficialmente às plataformas citadas. Os dados são
+          usados apenas para organizar seu controle financeiro.
         </div>
       </div>
     </AppShell>

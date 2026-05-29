@@ -22,7 +22,7 @@ const PREMIUM = [
   "Preenchimento automático dos dados",
   "Relatórios ilimitados",
   "Histórico financeiro completo",
-  "Comparativo entre plataformas",
+  "Comparativo entre aplicativos (Uber, 99, iFood e outras)",
   "Análise de ganho por hora e por km",
   "Acompanhamento mensal completo",
 ];
@@ -134,6 +134,11 @@ function PlanosPage() {
           <Link to="/como-funciona" className="underline hover:text-foreground">
             Saiba como funciona
           </Link>
+        </div>
+
+        <div className="rounded-xl border border-border/60 bg-card/30 p-3 text-center text-xs text-muted-foreground">
+          O DriveFlow não é afiliado oficialmente às plataformas citadas. Os dados servem
+          apenas para organizar seu controle financeiro.
         </div>
       </div>
 
