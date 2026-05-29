@@ -264,6 +264,7 @@ function ImportarPrintPage() {
 
   async function confirmarSalvar() {
     if (!detected || !importedPrintId) return;
+    if (saving || savedState) return;
     if (!isValid) {
       setTouched(true);
       toast.error("Preencha plataforma, data e ganho bruto antes de salvar.");
@@ -300,32 +301,45 @@ function ImportarPrintPage() {
         return;
       }
 
-      const { error: peErr } = await supabase.from("platform_entries").insert({
-        user_id: userId,
-        platform_name: payload.platform_name,
-        entry_date: payload.entry_date,
-        gross_earnings: payload.gross_earnings,
-        worked_hours: payload.worked_hours,
-        trips_count: payload.trips_count,
-        kilometers: payload.kilometers,
-        notes: payload.notes,
-        source: "imported_print",
-        imported_print_id: importedPrintId,
-      });
-      if (peErr) {
-        toast.error(`Falha ao salvar registro: ${peErr.message}`);
+      const { data: peData, error: peErr } = await supabase
+        .from("platform_entries")
+        .insert({
+          user_id: userId,
+          platform_name: payload.platform_name,
+          entry_date: payload.entry_date,
+          gross_earnings: payload.gross_earnings,
+          worked_hours: payload.worked_hours,
+          trips_count: payload.trips_count,
+          kilometers: payload.kilometers,
+          notes: payload.notes,
+          source: "imported_print",
+          imported_print_id: importedPrintId,
+        })
+        .select("id")
+        .single();
+      if (peErr || !peData) {
+        // rollback parcial: volta para pending_review para permitir nova tentativa sem duplicar
+        await supabase
+          .from("imported_prints")
+          .update({ status: "pending_review" })
+          .eq("id", importedPrintId);
+        toast.error(`Falha ao salvar registro: ${peErr?.message ?? "erro desconhecido"}`);
         return;
       }
 
-      toast.success("Registro salvo com sucesso!");
-      clearAll();
-      navigate({ to: "/" }).catch(() => {});
+      setSavedState({ importedPrintId, platformEntryId: peData.id });
+      toast.success("Registro salvo com sucesso no seu histórico financeiro.");
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Erro inesperado.";
       toast.error(msg);
     } finally {
       setSaving(false);
     }
+  }
+
+  function importarOutro() {
+    clearAll();
+    setSavedState(null);
   }
 
   async function cancelarImportacao() {
