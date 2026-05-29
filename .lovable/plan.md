@@ -1,47 +1,36 @@
-# Plano: Área de Revisão com Confirmar/Editar/Cancelar
+# Plano: Finalizar ação "Confirmar e salvar"
 
-## Resumo
-Reformular a seção "Dados detectados" da tela `src/routes/importar-print.tsx` para ter dois modos (visualização e edição), validação simples antes de confirmar, e ação explícita de salvar.
+Hoje a tela já atualiza `imported_prints` e insere em `platform_entries` ao confirmar, mas redireciona direto para `/`. Vou ajustar para mostrar uma tela de sucesso explícita com a mensagem solicitada e três botões de próximo passo, mantendo proteção contra duplo clique e tratamento de erro.
 
 ## Alterações em `src/routes/importar-print.tsx`
 
-### 1. Novo estado
-- `mode: "view" | "edit"` — controla se os campos são apenas leitura ou editáveis. Inicia em `"view"` quando a análise termina.
-- `saving: boolean` — estado do botão "Confirmar e salvar".
-- Snapshot dos dados antes de editar (para suportar "Cancelar" voltando aos valores anteriores).
+### 1. Novo estado de sucesso
+- `savedState: { importedPrintId: string; platformEntryId: string } | null`.
+- Quando setado, esconde o formulário/upload/seção de revisão e renderiza um card de sucesso.
 
-### 2. Modo visualização
-- Lista os campos em grid (label + valor).
-- Campos vazios renderizam o texto `Não identificado` em estilo `text-muted-foreground italic`.
-- Mantém o badge de confiança (Alta/Média/Baixa) já existente.
-- Botões: **Editar dados**, **Confirmar e salvar**, **Cancelar**.
+### 2. `confirmarSalvar()`
+- Manter validação (plataforma, data, ganho bruto > 0).
+- Manter `saving` como guarda contra duplo clique; sair cedo se `saving` já estiver `true` ou se `savedState` já existir.
+- Update de `imported_prints` com os campos: `entry_date`, `gross_earnings`, `worked_hours`, `trips_count`, `kilometers`, `tips`, `fees`, `confidence`, `notes`, `status = "confirmed"`.
+- Insert em `platform_entries` com `user_id`, `platform_name`, `entry_date`, `gross_earnings`, `worked_hours`, `trips_count`, `kilometers`, `source = "imported_print"`, `imported_print_id`, `notes`. Usar `.select('id').single()` para guardar o id.
+- Em sucesso: setar `savedState`, toast `"Registro salvo com sucesso no seu histórico financeiro."`.
+- Em erro: toast com a mensagem e manter o usuário na revisão para tentar novamente; **não** marcar como salvo.
+- Rollback parcial: se o update de `imported_prints` deu certo mas o insert em `platform_entries` falhou, reverter `status` para `pending_review` para permitir nova tentativa sem duplicar.
 
-### 3. Modo edição
-- Mesmo grid de inputs já presente (Plataforma, Data, Ganho bruto, Horas, Corridas/entregas, Km, Gorjetas, Taxas, Observações).
-- Botões: **Salvar alterações** (volta para `view`), **Cancelar edição** (restaura snapshot e volta para `view`).
+### 3. Card de sucesso
+Renderizado quando `savedState` existe, substituindo o conteúdo da página (mantendo `AppShell`):
+- Ícone de check + título "Registro salvo com sucesso"
+- Subtítulo: "Registro salvo com sucesso no seu histórico financeiro."
+- Três botões:
+  - **Ver dashboard** → `/dashboard`
+  - **Importar outro print** → chama `clearAll()` + `setSavedState(null)` (permanece em `/importar-print`)
+  - **Ver histórico** → `/reports`
 
-### 4. Validação ao confirmar
-- Função `validate()` exige: `platform_name`, `entry_date`, `gross_earnings > 0` (numérico válido).
-- Se faltar, exibir mensagem inline por campo e `toast.error("Preencha plataforma, data e ganho bruto antes de salvar.")`.
-- Botão "Confirmar e salvar" fica `disabled` enquanto validação falha; explica o motivo via `title`.
-
-### 5. Ação "Confirmar e salvar"
-- Atualiza o registro `imported_prints` com os valores revisados e `status = "confirmed"`.
-- Insere uma linha em `platform_entries` (source = `"imported_print"`, `imported_print_id` = id atual) com os campos editados.
-- Toast de sucesso, limpa o formulário (`clearFile` + reset de estados).
-
-### 6. Ação "Cancelar" (no modo view)
-- Atualiza `imported_prints.status = "discarded"`.
-- Limpa formulário e dados detectados; mantém o usuário na tela.
-- Toast informativo "Importação cancelada".
-
-### 7. Mensagens e UX
-- Badge de "Modo de simulação" permanece.
-- Pequeno texto: "Revise as informações abaixo. Nada é salvo até você clicar em Confirmar e salvar."
-- Validação inline simples (borda vermelha + texto curto).
+### 4. Loading e proteção
+- Botão "Confirmar e salvar" já mostra spinner via `saving` e fica `disabled`. Adicionar guarda no topo da função: `if (saving || savedState) return;`.
 
 ## Out of scope
-- Sem alterações em outras telas, schema ou políticas RLS.
+- Sem alterações de schema, RLS ou outras telas.
 
 ## Arquivos alterados
-- `src/routes/importar-print.tsx` (único arquivo)
+- `src/routes/importar-print.tsx`
