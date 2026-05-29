@@ -105,7 +105,7 @@ function formatDateBR(iso: string) {
 }
 
 function ImportarPrintPage() {
-  const navigate = useNavigate();
+  const [savedState, setSavedState] = useState<{ importedPrintId: string; platformEntryId: string } | null>(null);
   const [plataforma, setPlataforma] = useState<string>("Uber");
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
