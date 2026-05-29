@@ -88,6 +88,60 @@ export type Database = {
         }
         Relationships: []
       }
+      imported_prints: {
+        Row: {
+          confidence: number | null
+          created_at: string
+          entry_date: string | null
+          fees: number | null
+          gross_earnings: number | null
+          id: string
+          image_url: string | null
+          kilometers: number | null
+          notes: string | null
+          platform_name: string
+          status: string | null
+          tips: number | null
+          trips_count: number | null
+          user_id: string
+          worked_hours: number | null
+        }
+        Insert: {
+          confidence?: number | null
+          created_at?: string
+          entry_date?: string | null
+          fees?: number | null
+          gross_earnings?: number | null
+          id?: string
+          image_url?: string | null
+          kilometers?: number | null
+          notes?: string | null
+          platform_name: string
+          status?: string | null
+          tips?: number | null
+          trips_count?: number | null
+          user_id: string
+          worked_hours?: number | null
+        }
+        Update: {
+          confidence?: number | null
+          created_at?: string
+          entry_date?: string | null
+          fees?: number | null
+          gross_earnings?: number | null
+          id?: string
+          image_url?: string | null
+          kilometers?: number | null
+          notes?: string | null
+          platform_name?: string
+          status?: string | null
+          tips?: number | null
+          trips_count?: number | null
+          user_id?: string
+          worked_hours?: number | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           cpf: string | null
