@@ -1,6 +1,6 @@
 import { ReactNode, useEffect, useState } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, Car, Receipt, Target, FileBarChart, User, Crown, LogOut, Menu, X, Plus, CalendarDays } from "lucide-react";
+import { LayoutDashboard, Car, Receipt, Target, FileBarChart, User, Crown, LogOut, Menu, X, Plus, CalendarDays, HelpCircle } from "lucide-react";
 import { DriveFlowLogo } from "@/components/DriveFlowLogo";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -13,6 +13,7 @@ const NAV = [
   { to: "/expenses", label: "Despesas", icon: Receipt },
   { to: "/goals", label: "Metas", icon: Target },
   { to: "/reports", label: "Relatórios", icon: FileBarChart },
+  { to: "/como-funciona", label: "Como funciona", icon: HelpCircle },
   { to: "/profile", label: "Perfil", icon: User },
   { to: "/premium", label: "Premium", icon: Crown },
 ] as const;

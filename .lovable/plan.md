@@ -1,31 +1,53 @@
-# Corrigir UX do erro "senha vazada" no cadastro
+## Plano: Nova página "Como funciona"
 
-## Causa
-O Supabase Auth está com **Leaked Password Protection (HIBP)** ativo. Quando o usuário escolhe uma senha que já vazou publicamente, o signup retorna `code: "weak_password"` com `reasons: ["pwned"]` e mensagem em inglês. A proteção está correta — só a UX precisa melhorar.
+### Objetivo
+Criar uma nova rota `/como-funciona` que explique de forma simples e direta o que é o DriveFlow e por que ele é útil para motoristas e entregadores.
 
-## Mudanças (apenas frontend, sem alterar design)
+### Passos
 
-### 1. `src/components/AuthCard.tsx` — tratar erro do Supabase
-No `catch` do `handleSubmit`, mapear códigos de erro para mensagens em português antes de exibir o toast:
+1. **Criar rota `src/routes/como-funciona.tsx`**
+   - Definir `head()` com título e meta descrição SEO
+   - Usar `AppShell` como wrapper (igual às outras páginas internas)
+   - Título na AppShell: "Como funciona"
+   - Estrutura da página:
+     - Título principal: "Entenda seu lucro real como motorista ou entregador"
+     - Texto introdutório explicativo
+     - 4 cards explicativos em grid (2 colunas desktop, 1 coluna mobile) com ícones do Lucide
+       1. Registre seus ganhos (icon: `TrendingUp`)
+       2. Adicione seus custos (icon: `Receipt`)
+       3. Importe prints e comprovantes (icon: `ImageUp`)
+       4. Veja seu lucro real (icon: `BarChart3`)
+     - Seção "O que você está pagando?" com texto explicativo sobre o plano pago
+     - Observação final em estilo disclaimer
+   - Estilo visual:
+     - Usar tokens do design system: `bg-hero`, `grid-bg`, `glass` cards
+     - Ícones em tom neon/azul primário
+     - Tipografia `font-display` para títulos
+     - Espaçamento coerente com as outras páginas
 
-- `weak_password` + `reasons.includes("pwned")` → "Essa senha já apareceu em vazamentos públicos. Escolha uma senha diferente, de preferência única para esta conta."
-- `weak_password` (outros motivos) → "Senha muito fraca. Use ao menos 8 caracteres, misturando letras, números e símbolos."
-- `user_already_exists` / `email_exists` → "Já existe uma conta com este email. Tente fazer login."
-- `invalid_credentials` → "Email ou senha incorretos."
-- `over_email_send_rate_limit` → "Muitas tentativas. Aguarde alguns minutos e tente novamente."
-- Fallback: usar `error.message` original.
+2. **Adicionar aba ao menu principal (`src/components/AppShell.tsx`)**
+   - Inserir novo item no array `NAV`:
+     - `to: "/como-funciona"`
+     - `label: "Como funciona"`
+     - `icon: HelpCircle` (do lucide-react)
+   - Posicionar após "Painel" ou antes de "Premium", conforme hierarquia lógica
 
-Aplicar o mesmo mapeamento tanto no fluxo de signup quanto de login.
+3. **Registro automático de rota**
+   - O TanStack Router detectará o novo arquivo e gerará `routeTree.gen.ts` automaticamente durante o build/dev. Nenhuma edição manual necessária.
 
-### 2. `src/components/AuthCard.tsx` — feedback inline imediato
-Manter o indicador de força de senha atual. Ao receber o erro `pwned`, além do toast, exibir uma mensagem inline em vermelho logo abaixo do campo Senha (mesmo estilo visual já existente) dizendo: "Senha encontrada em vazamentos públicos." Limpar essa mensagem quando o usuário editar o campo.
+### Design tokens a utilizar
+- `bg-hero` + `grid-bg` para fundo
+- `glass` para cards (bordas arredondadas, blur, borda sutil)
+- `--neon` / `text-[var(--neon)]` para ícones e destaques
+- `font-display` para títulos, `text-muted-foreground` para corpos de texto
+- `border-border/60` para separadores
 
-### 3. Sem mudanças no backend
-- Não desativar a proteção HIBP — ela é importante.
-- Não alterar tabelas, RLS, nem `configure_auth`.
-- Não mexer em design tokens, layout ou cores existentes.
+### Arquivos alterados
+- `src/routes/como-funciona.tsx` (novo)
+- `src/components/AppShell.tsx` (edição no array NAV)
 
-## Resultado
-- Usuário entende em português por que a senha foi rejeitada.
-- Feedback aparece junto ao campo, não só num toast.
-- Demais erros de auth também ficam traduzidos consistentemente.
+### Não serão alterados
+- Design principal / tokens CSS
+- Sistema de autenticação
+- Backend / banco de dados
+- Outras páginas existentes
