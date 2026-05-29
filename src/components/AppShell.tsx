@@ -13,6 +13,7 @@ const NAV = [
   { to: "/expenses", label: "Despesas", icon: Receipt },
   { to: "/goals", label: "Metas", icon: Target },
   { to: "/reports", label: "Relatórios", icon: FileBarChart },
+  { to: "/historico", label: "Histórico", icon: History },
   { to: "/como-funciona", label: "Como funciona", icon: HelpCircle },
   { to: "/importar-print", label: "Importar Print", icon: ImageUp },
   { to: "/profile", label: "Perfil", icon: User },
