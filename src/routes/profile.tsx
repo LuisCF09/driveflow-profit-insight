@@ -25,14 +25,18 @@ function ProfilePage() {
 
   useEffect(() => {
     (async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { navigate({ to: "/" }); return; }
-      setEmail(user.email || "");
-      const { data: p } = await supabase.from("profiles").select("name, cpf").eq("id", user.id).maybeSingle();
-      setName(p?.name || "");
-      setCpf(p?.cpf || "");
-      const { data: v } = await supabase.from("vehicles").select("*").eq("is_active", true).maybeSingle();
-      setVehicle(v);
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) { navigate({ to: "/" }); return; }
+        setEmail(user.email || "");
+        const { data: p } = await supabase.from("profiles").select("name, cpf").eq("id", user.id).maybeSingle();
+        setName(p?.name || "");
+        setCpf(p?.cpf || "");
+        const { data: v } = await supabase.from("vehicles").select("*").eq("is_active", true).maybeSingle();
+        setVehicle(v);
+      } catch (err) {
+        console.error("[profile] load failed", err);
+      }
     })();
   }, [navigate]);
 
