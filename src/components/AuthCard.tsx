@@ -221,6 +221,13 @@ export function AuthCard() {
           </>
         )}
       </div>
+      <div className="mt-4 flex items-center justify-center gap-4 text-[11px] text-muted-foreground">
+        <Link className="hover:text-foreground" to="/termos">Termos</Link>
+        <span className="opacity-40">•</span>
+        <Link className="hover:text-foreground" to="/privacidade">Privacidade</Link>
+        <span className="opacity-40">•</span>
+        <Link className="hover:text-foreground" to="/contato">Contato</Link>
+      </div>
     </div>
   );
 }
