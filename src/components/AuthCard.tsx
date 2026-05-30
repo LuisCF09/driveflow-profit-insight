@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -220,6 +220,13 @@ export function AuthCard() {
             </button>
           </>
         )}
+      </div>
+      <div className="mt-4 flex items-center justify-center gap-4 text-[11px] text-muted-foreground">
+        <Link className="hover:text-foreground" to="/termos">Termos</Link>
+        <span className="opacity-40">•</span>
+        <Link className="hover:text-foreground" to="/privacidade">Privacidade</Link>
+        <span className="opacity-40">•</span>
+        <Link className="hover:text-foreground" to="/contato">Contato</Link>
       </div>
     </div>
   );

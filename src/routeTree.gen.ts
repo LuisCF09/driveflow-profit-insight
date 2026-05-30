@@ -9,9 +9,11 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TermosRouteImport } from './routes/termos'
 import { Route as RidesRouteImport } from './routes/rides'
 import { Route as ReportsRouteImport } from './routes/reports'
 import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as PrivacidadeRouteImport } from './routes/privacidade'
 import { Route as PremiumRouteImport } from './routes/premium'
 import { Route as PlanosRouteImport } from './routes/planos'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
@@ -21,9 +23,15 @@ import { Route as GoalsRouteImport } from './routes/goals'
 import { Route as ExpensesRouteImport } from './routes/expenses'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as DailyReportRouteImport } from './routes/daily-report'
+import { Route as ContatoRouteImport } from './routes/contato'
 import { Route as ComoFuncionaRouteImport } from './routes/como-funciona'
 import { Route as IndexRouteImport } from './routes/index'
 
+const TermosRoute = TermosRouteImport.update({
+  id: '/termos',
+  path: '/termos',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RidesRoute = RidesRouteImport.update({
   id: '/rides',
   path: '/rides',
@@ -37,6 +45,11 @@ const ReportsRoute = ReportsRouteImport.update({
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacidadeRoute = PrivacidadeRouteImport.update({
+  id: '/privacidade',
+  path: '/privacidade',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PremiumRoute = PremiumRouteImport.update({
@@ -84,6 +97,11 @@ const DailyReportRoute = DailyReportRouteImport.update({
   path: '/daily-report',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ContatoRoute = ContatoRouteImport.update({
+  id: '/contato',
+  path: '/contato',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ComoFuncionaRoute = ComoFuncionaRouteImport.update({
   id: '/como-funciona',
   path: '/como-funciona',
@@ -98,6 +116,7 @@ const IndexRoute = IndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/como-funciona': typeof ComoFuncionaRoute
+  '/contato': typeof ContatoRoute
   '/daily-report': typeof DailyReportRoute
   '/dashboard': typeof DashboardRoute
   '/expenses': typeof ExpensesRoute
@@ -107,13 +126,16 @@ export interface FileRoutesByFullPath {
   '/onboarding': typeof OnboardingRoute
   '/planos': typeof PlanosRoute
   '/premium': typeof PremiumRoute
+  '/privacidade': typeof PrivacidadeRoute
   '/profile': typeof ProfileRoute
   '/reports': typeof ReportsRoute
   '/rides': typeof RidesRoute
+  '/termos': typeof TermosRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/como-funciona': typeof ComoFuncionaRoute
+  '/contato': typeof ContatoRoute
   '/daily-report': typeof DailyReportRoute
   '/dashboard': typeof DashboardRoute
   '/expenses': typeof ExpensesRoute
@@ -123,14 +145,17 @@ export interface FileRoutesByTo {
   '/onboarding': typeof OnboardingRoute
   '/planos': typeof PlanosRoute
   '/premium': typeof PremiumRoute
+  '/privacidade': typeof PrivacidadeRoute
   '/profile': typeof ProfileRoute
   '/reports': typeof ReportsRoute
   '/rides': typeof RidesRoute
+  '/termos': typeof TermosRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/como-funciona': typeof ComoFuncionaRoute
+  '/contato': typeof ContatoRoute
   '/daily-report': typeof DailyReportRoute
   '/dashboard': typeof DashboardRoute
   '/expenses': typeof ExpensesRoute
@@ -140,15 +165,18 @@ export interface FileRoutesById {
   '/onboarding': typeof OnboardingRoute
   '/planos': typeof PlanosRoute
   '/premium': typeof PremiumRoute
+  '/privacidade': typeof PrivacidadeRoute
   '/profile': typeof ProfileRoute
   '/reports': typeof ReportsRoute
   '/rides': typeof RidesRoute
+  '/termos': typeof TermosRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/como-funciona'
+    | '/contato'
     | '/daily-report'
     | '/dashboard'
     | '/expenses'
@@ -158,13 +186,16 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/planos'
     | '/premium'
+    | '/privacidade'
     | '/profile'
     | '/reports'
     | '/rides'
+    | '/termos'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/como-funciona'
+    | '/contato'
     | '/daily-report'
     | '/dashboard'
     | '/expenses'
@@ -174,13 +205,16 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/planos'
     | '/premium'
+    | '/privacidade'
     | '/profile'
     | '/reports'
     | '/rides'
+    | '/termos'
   id:
     | '__root__'
     | '/'
     | '/como-funciona'
+    | '/contato'
     | '/daily-report'
     | '/dashboard'
     | '/expenses'
@@ -190,14 +224,17 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/planos'
     | '/premium'
+    | '/privacidade'
     | '/profile'
     | '/reports'
     | '/rides'
+    | '/termos'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ComoFuncionaRoute: typeof ComoFuncionaRoute
+  ContatoRoute: typeof ContatoRoute
   DailyReportRoute: typeof DailyReportRoute
   DashboardRoute: typeof DashboardRoute
   ExpensesRoute: typeof ExpensesRoute
@@ -207,13 +244,22 @@ export interface RootRouteChildren {
   OnboardingRoute: typeof OnboardingRoute
   PlanosRoute: typeof PlanosRoute
   PremiumRoute: typeof PremiumRoute
+  PrivacidadeRoute: typeof PrivacidadeRoute
   ProfileRoute: typeof ProfileRoute
   ReportsRoute: typeof ReportsRoute
   RidesRoute: typeof RidesRoute
+  TermosRoute: typeof TermosRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/termos': {
+      id: '/termos'
+      path: '/termos'
+      fullPath: '/termos'
+      preLoaderRoute: typeof TermosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/rides': {
       id: '/rides'
       path: '/rides'
@@ -233,6 +279,13 @@ declare module '@tanstack/react-router' {
       path: '/profile'
       fullPath: '/profile'
       preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacidade': {
+      id: '/privacidade'
+      path: '/privacidade'
+      fullPath: '/privacidade'
+      preLoaderRoute: typeof PrivacidadeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/premium': {
@@ -298,6 +351,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DailyReportRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/contato': {
+      id: '/contato'
+      path: '/contato'
+      fullPath: '/contato'
+      preLoaderRoute: typeof ContatoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/como-funciona': {
       id: '/como-funciona'
       path: '/como-funciona'
@@ -318,6 +378,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ComoFuncionaRoute: ComoFuncionaRoute,
+  ContatoRoute: ContatoRoute,
   DailyReportRoute: DailyReportRoute,
   DashboardRoute: DashboardRoute,
   ExpensesRoute: ExpensesRoute,
@@ -327,20 +388,12 @@ const rootRouteChildren: RootRouteChildren = {
   OnboardingRoute: OnboardingRoute,
   PlanosRoute: PlanosRoute,
   PremiumRoute: PremiumRoute,
+  PrivacidadeRoute: PrivacidadeRoute,
   ProfileRoute: ProfileRoute,
   ReportsRoute: ReportsRoute,
   RidesRoute: RidesRoute,
+  TermosRoute: TermosRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
