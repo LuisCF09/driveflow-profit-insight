@@ -1,38 +1,49 @@
-# Reorganizar menu principal
+## Plano: Páginas Termos, Privacidade e Contato
 
-Atualizar `src/components/AppShell.tsx` para um menu enxuto de 8 itens, mantendo todas as rotas existentes funcionais.
+### 1. Banco de dados
+Migration criando `public.contact_messages`:
+- `id`, `user_id` (nullable, sem FK pra `auth.users` por convenção do projeto), `name`, `email`, `subject`, `message`, `status` default `'new'`, `created_at`.
+- GRANTs: `INSERT` para `anon` e `authenticated`; `ALL` para `service_role`. Sem `SELECT` para usuários comuns (só service_role lê).
+- RLS habilitada.
+- Policies:
+  - `INSERT` autenticado: `auth.uid() = user_id` (vincula ao próprio usuário).
+  - `INSERT` anônimo: `user_id IS NULL` (permite envio sem login).
+  - Sem policies de SELECT/UPDATE/DELETE para `anon`/`authenticated` (admins futuramente via service_role / role table).
 
-## Novo menu (na ordem)
+### 2. Novas rotas
 
-| Label | Destino | Observação |
-|---|---|---|
-| Dashboard | `/dashboard` | — |
-| Adicionar Registro | abre `AddRideDialog` | botão (não Link), reaproveita o diálogo já usado no header |
-| Importar Print | `/importar-print` | badge **Premium** ao lado do label |
-| Histórico Financeiro | `/historico` | — |
-| Relatórios | `/reports` | — |
-| Como funciona | `/como-funciona` | posicionado acima de Planos para fácil descoberta |
-| Planos | `/planos` | — |
-| Configurações | `/profile` | mesmo destino, label renomeado |
+**`src/routes/termos.tsx`** — "Termos de Uso"
+- Layout simples reaproveitando o estilo do `index.tsx` (bg-hero, grid-bg, container max-w-3xl).
+- Conteúdo em seções com `<h2>` e parágrafos cobrindo todos os pontos pedidos (ferramenta de organização, sem afiliação com Uber/99/iFood/Mercado Livre/Rappi, responsabilidade do usuário, estimativas, revisão de prints, sem garantia de ganhos, evitar dados sensíveis, atualizações, aceitação ao usar).
+- "Última atualização: maio de 2026" no final.
+- `head()` com title/description próprios.
 
-## Mudanças em `AppShell.tsx`
+**`src/routes/privacidade.tsx`** — "Política de Privacidade"
+- Mesmo layout.
+- Seções: dados coletados (lista), uso dos dados (lista), uso dos prints, edição/exclusão pelo usuário, não venda de dados, alerta sobre dados sensíveis em prints, proteção via autenticação + RLS, isolamento por usuário, contato para suporte/remoção.
+- "Última atualização: maio de 2026".
+- `head()` próprio.
 
-1. **Reescrever array `NAV`** com os 8 itens acima. Suportar dois tipos de entrada:
-   - `{ type: "link", to, label, icon, badge? }`
-   - `{ type: "action", action: "add-record", label, icon }`
-2. **Renderização (desktop + mobile drawer)**: mapear o array; itens `link` renderizam `<Link>`, itens `action` renderizam `<button>` que faz `setAddOpen(true)` (e fecha o drawer no mobile).
-3. **Badge Premium**: pequena pill `text-[10px] uppercase tracking-wide` com `bg-gradient-primary text-primary-foreground` (ou tokens equivalentes do design system) renderizada à direita do label no item Importar Print, nos dois layouts.
-4. **Botão "+ Corrida" no header**: manter como está (atalho rápido).
-5. **Botão "Sair"**: permanece no rodapé da sidebar e final do drawer mobile.
+**`src/routes/contato.tsx`** — "Fale com o DriveFlow"
+- Texto introdutório.
+- Formulário (`<form>` controlado com `useState` + validação Zod) com Nome, Email, Assunto, Mensagem (textarea).
+- Validação: nome obrigatório, email válido, assunto obrigatório, mensagem ≥10 chars. Erros exibidos por campo.
+- Submit: insere em `contact_messages` via `supabase.from('contact_messages').insert(...)` no client. Pega `user_id` de `supabase.auth.getUser()` (null se deslogado). Toast de sucesso "Mensagem enviada com sucesso. Em breve entraremos em contato." e limpa o form.
+- Funciona logado ou deslogado (RLS permite ambos).
+- `head()` próprio.
 
-## Rotas não listadas (continuam funcionando por URL)
+### 3. Navegação
+- **Rodapé do `src/routes/index.tsx`**: trocar os 3 `<a href="#">` (Termos / Privacidade / Contato) por `<Link to="/termos">`, `<Link to="/privacidade">`, `<Link to="/contato">`.
+- **`src/components/AuthCard.tsx`**: verificar se tem rodapé; se sim, adicionar os mesmos 3 links. Se não tiver, adicionar uma linha discreta abaixo dos botões com os 3 links em texto pequeno (`text-xs text-muted-foreground`).
+- Páginas são públicas (não passam pelo `AppShell`), acessíveis sem login.
 
-`/daily-report`, `/rides`, `/expenses`, `/goals`, `/premium` permanecem como arquivos de rota válidos — apenas saem do menu principal. Links internos existentes nessas páginas não são alterados.
+### 4. Tom
+Linguagem simples, profissional. Sem juridiquês. Sem afirmar parceria oficial. Sem prometer ganhos. Deixa claro que cálculos são estimativas e leitura de prints pode errar.
 
-## Verificação final
-
-- Cada item do menu tem ação (Link válido ou onClick que abre o diálogo); nenhum botão fica inerte.
-- `pathname === n.to` continua marcando o item ativo nos itens do tipo `link`.
-- Importar Print exibe visualmente o selo Premium, mas continua clicável (a restrição funcional de Premium é tratada na própria página, fora do escopo desta tarefa).
-
-Nenhuma outra alteração de arquivo é necessária.
+### Arquivos
+- migration `contact_messages` (1)
+- novo `src/routes/termos.tsx`
+- novo `src/routes/privacidade.tsx`
+- novo `src/routes/contato.tsx`
+- editar `src/routes/index.tsx` (links do rodapé)
+- editar `src/components/AuthCard.tsx` (links no rodapé do card, se couber)
