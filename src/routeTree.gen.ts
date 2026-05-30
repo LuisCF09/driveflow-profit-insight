@@ -13,6 +13,7 @@ import { Route as TermosRouteImport } from './routes/termos'
 import { Route as RidesRouteImport } from './routes/rides'
 import { Route as ReportsRouteImport } from './routes/reports'
 import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as PrivacidadeRouteImport } from './routes/privacidade'
 import { Route as PremiumRouteImport } from './routes/premium'
 import { Route as PlanosRouteImport } from './routes/planos'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
@@ -43,6 +44,11 @@ const ReportsRoute = ReportsRouteImport.update({
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacidadeRoute = PrivacidadeRouteImport.update({
+  id: '/privacidade',
+  path: '/privacidade',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PremiumRoute = PremiumRouteImport.update({
@@ -113,6 +119,7 @@ export interface FileRoutesByFullPath {
   '/onboarding': typeof OnboardingRoute
   '/planos': typeof PlanosRoute
   '/premium': typeof PremiumRoute
+  '/privacidade': typeof PrivacidadeRoute
   '/profile': typeof ProfileRoute
   '/reports': typeof ReportsRoute
   '/rides': typeof RidesRoute
@@ -130,6 +137,7 @@ export interface FileRoutesByTo {
   '/onboarding': typeof OnboardingRoute
   '/planos': typeof PlanosRoute
   '/premium': typeof PremiumRoute
+  '/privacidade': typeof PrivacidadeRoute
   '/profile': typeof ProfileRoute
   '/reports': typeof ReportsRoute
   '/rides': typeof RidesRoute
@@ -148,6 +156,7 @@ export interface FileRoutesById {
   '/onboarding': typeof OnboardingRoute
   '/planos': typeof PlanosRoute
   '/premium': typeof PremiumRoute
+  '/privacidade': typeof PrivacidadeRoute
   '/profile': typeof ProfileRoute
   '/reports': typeof ReportsRoute
   '/rides': typeof RidesRoute
@@ -167,6 +176,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/planos'
     | '/premium'
+    | '/privacidade'
     | '/profile'
     | '/reports'
     | '/rides'
@@ -184,6 +194,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/planos'
     | '/premium'
+    | '/privacidade'
     | '/profile'
     | '/reports'
     | '/rides'
@@ -201,6 +212,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/planos'
     | '/premium'
+    | '/privacidade'
     | '/profile'
     | '/reports'
     | '/rides'
@@ -219,6 +231,7 @@ export interface RootRouteChildren {
   OnboardingRoute: typeof OnboardingRoute
   PlanosRoute: typeof PlanosRoute
   PremiumRoute: typeof PremiumRoute
+  PrivacidadeRoute: typeof PrivacidadeRoute
   ProfileRoute: typeof ProfileRoute
   ReportsRoute: typeof ReportsRoute
   RidesRoute: typeof RidesRoute
@@ -253,6 +266,13 @@ declare module '@tanstack/react-router' {
       path: '/profile'
       fullPath: '/profile'
       preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacidade': {
+      id: '/privacidade'
+      path: '/privacidade'
+      fullPath: '/privacidade'
+      preLoaderRoute: typeof PrivacidadeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/premium': {
@@ -347,6 +367,7 @@ const rootRouteChildren: RootRouteChildren = {
   OnboardingRoute: OnboardingRoute,
   PlanosRoute: PlanosRoute,
   PremiumRoute: PremiumRoute,
+  PrivacidadeRoute: PrivacidadeRoute,
   ProfileRoute: ProfileRoute,
   ReportsRoute: ReportsRoute,
   RidesRoute: RidesRoute,
