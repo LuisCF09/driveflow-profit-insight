@@ -91,9 +91,9 @@ function LandingPage() {
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-6 py-6 text-xs text-muted-foreground sm:flex-row">
           <span>© {new Date().getFullYear()} DriveFlow. Lucro real para quem dirige.</span>
           <div className="flex items-center gap-5">
-            <a className="hover:text-foreground" href="#">Termos</a>
-            <a className="hover:text-foreground" href="#">Privacidade</a>
-            <a className="hover:text-foreground" href="#">Contato</a>
+            <Link className="hover:text-foreground" to="/termos">Termos</Link>
+            <Link className="hover:text-foreground" to="/privacidade">Privacidade</Link>
+            <Link className="hover:text-foreground" to="/contato">Contato</Link>
           </div>
         </div>
       </footer>
